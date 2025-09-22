@@ -1,0 +1,18 @@
+@use "normalize";
+
+// Styles SCSS personnalisés
+.scss-test{
+    color: red;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.custom-scss-component {
+    background-color: #f0f9ff;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    
+    &:hover {
+        background-color: #e0f2fe;
+    }
+}
