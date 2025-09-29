@@ -1,24 +1,4 @@
-<template>
-  <div class="admin-layout">
-    <header class="admin-layout__header">
-      <NuxtLink to="/" class="admin-layout__brand">URBEX CHRONICLES • Admin</NuxtLink>
-      <nav class="admin-layout__nav">
-        <NuxtLink to="/" class="admin-layout__link">Dashboard</NuxtLink>
-      </nav>
-    </header>
-    <main class="admin-layout__main">
-      <slot />
-    </main>
-  </div>
-</template>
-
-<style scoped>
-.admin-layout__header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#fff}
-.admin-layout__brand{font-weight:700;color:#111827;text-decoration:none}
-.admin-layout__nav{display:flex;gap:12px}
-.admin-layout__link{color:#374151;text-decoration:none}
-.admin-layout__main{padding:16px}
-</style>
+// ...existing code...
 <template>
   <div class="admin-layout">
     <!-- Header de navigation admin -->
