@@ -9,6 +9,10 @@ export default defineNuxtConfig({
     '@/assets/css/tailwind.css',
     '@/assets/style/main.scss'
   ],
+  alias: {
+    "~": "./app",
+    "@": "./app"
+  },
   vite: {
     plugins: [
       tailwindcss(),

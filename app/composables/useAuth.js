@@ -3,7 +3,7 @@
  * Fournit des méthodes réactives pour gérer l'état d'authentification
  */
 
-import AuthService from "../app/service/AuthService.js";
+import AuthService from "../service/AuthService.js";
 
 export const useAuth = () => {
   // État réactif
