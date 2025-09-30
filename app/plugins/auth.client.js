@@ -3,7 +3,7 @@
  * Vérifie automatiquement l'état d'authentification au démarrage de l'app
  */
 
-import AuthService from "../app/service/AuthService.js";
+import AuthService from "../service/AuthService.js";
 
 export default defineNuxtPlugin(async () => {
   // Seulement côté client
