@@ -1,4 +1,7 @@
 <template>
+  <div class="body">
+    test tailwind
+  </div>
   <div class="login-page">
     <div class="login-page__container">
       <!-- Logo et titre -->
@@ -79,7 +82,7 @@
 </template>
 
 <script setup>
-import { useAuth } from '../../composables/useAuth.js'
+import { useAuth } from '../composables/useAuth.js'
 // Meta de la page
 definePageMeta({
   layout: false,
