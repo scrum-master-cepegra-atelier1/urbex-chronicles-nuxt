@@ -1,143 +1,162 @@
 <template>
-  <div class="login-page">
-    <div class="login-page__container">
-      <!-- Logo et titre -->
-      <div class="login-page__header">
-        <h1 class="login-page__header__title">URBEX CHRONICLES</h1>
-        <p class="login-page__header__subtitle">Administration - CMS</p>
-      </div>
-
-      <!-- Formulaire de connexion -->
-      <div class="login-page__form-container">
-        <form @submit.prevent="handleLogin" class="login-page__form">
-          <h2 class="login-page__form__title">Connexion</h2>
+  <div class="min-h-screen bg-white flex flex-col font-sans">
+    <!-- Contenu principal centré -->
+    <div class="flex-1 flex items-center justify-center p-8">
+      <div class="w-full max-w-md text-center">
+        <!-- Header avec titre -->
+        <div class="mb-8">
+          <h1 class="text-4xl font-bold text-gray-800 mb-2 tracking-tight">Urbex Chronicles</h1>
+          <p class="text-gray-600 mb-8 text-lg font-normal">L'urbex à coté de chez toi</p>
           
-          <!-- Champ email admin -->
-          <div class="login-page__form__field">
-            <label for="email" class="login-page__form__field__label">
-              Email administrateur
-            </label>
+          <!-- Logo -->
+          <div class="flex justify-center mb-6">
+            <img src="/images/logo.svg" alt="Logo Urbex Chronicles" class="w-20 h-auto" />
+          </div>
+          
+        </div>
+
+        <!-- Formulaire -->
+        <form @submit.prevent="handleLogin" class="space-y-4">
+          <!-- Champ Nom -->
+          <div class="text-left">
+            <label for="nom" class="block text-gray-800 text-sm font-medium mb-2">Nom</label>
             <input
-              id="email"
-              v-model="formData.email"
-              type="email"
-              class="login-page__form__field__input"
-              :class="{ 'login-page__form__field__input--error': errors.email }"
-              placeholder="admin@exemple.com"
+              id="nom"
+              v-model="formData.nom"
+              type="text"
+              autocomplete="username"
+              class="w-full px-4 py-3 bg-white border-2 border-gray-500 rounded-lg text-gray-800 text-base transition-all duration-200 focus:outline-none focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
+              :class="{ 'border-red-500': errors.nom }"
+              placeholder="Nom"
               required
               :disabled="isLoading"
             />
-            <span v-if="errors.email" class="login-page__form__field__error">
-              {{ errors.email }}
+            <span v-if="errors.nom" class="block text-red-500 text-sm mt-1">
+              {{ errors.nom }}
             </span>
           </div>
 
-          <!-- Champ mot de passe -->
-          <div class="login-page__form__field">
-            <label for="password" class="login-page__form__field__label">
-              Mot de passe
-            </label>
+          <!-- Champ Mot de passe -->
+          <div class="text-left">
+            <label for="password" class="block text-gray-800 text-sm font-medium mb-2">Mot de passe</label>
             <input
               id="password"
               v-model="formData.password"
               type="password"
-              class="login-page__form__field__input"
-              :class="{ 'login-page__form__field__input--error': errors.password }"
-              placeholder="Votre mot de passe"
+              autocomplete="current-password"
+              class="w-full px-4 py-3 bg-white border-2 border-gray-500 rounded-lg text-gray-800 text-base transition-all duration-200 focus:outline-none focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
+              :class="{ 'border-red-500': errors.password }"
+              placeholder="Mot de passe"
               required
               :disabled="isLoading"
             />
-            <span v-if="errors.password" class="login-page__form__field__error">
+            <span v-if="errors.password" class="block text-red-500 text-sm mt-1">
               {{ errors.password }}
             </span>
           </div>
 
+          <!-- Lien mot de passe oublié -->
+          <div class="text-left mb-6">
+            <a href="#" class="text-blue-500 no-underline text-sm hover:underline">Mot de passe oublié ?</a>
+          </div>
+
           <!-- Message d'erreur global -->
-          <div v-if="globalError" class="login-page__form__error">
+          <div v-if="globalError" class="bg-red-50 border border-red-200 rounded-lg p-3 text-red-800 text-sm mb-5">
             {{ globalError }}
           </div>
 
-          <!-- Bouton de soumission -->
+          <!-- Bouton de connexion -->
           <button
             type="submit"
-            class="login-page__form__submit"
+            class="w-full py-3.5 bg-black text-white border-none rounded-lg text-base font-semibold cursor-pointer transition-all duration-200 mb-8 hover:bg-gray-700 disabled:opacity-90 disabled:cursor-not-allowed"
             :disabled="isLoading || !isFormValid"
           >
             {{ isLoading ? 'Connexion...' : 'Se connecter' }}
           </button>
         </form>
 
-        <!-- Information pour les admins -->
-        <div class="login-page__footer">
-          <p class="login-page__footer__info">
-            Seuls les administrateurs Strapi peuvent accéder à cette interface.
-          </p>
+        <!-- Séparateur -->
+        <div class="my-6 relative text-gray-600 text-sm">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-center bg-white px-4">
+            <span>Ou continuer avec</span>
+          </div>
+        </div>
+
+        <!-- Boutons OAuth -->
+        <div class="flex gap-3 mb-8">
+          <button class="flex-1 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-800 text-sm font-medium cursor-pointer transition-all duration-200 hover:border-gray-300 hover:bg-gray-50">
+            <span class="text-blue-500">Google</span>
+          </button>
+          <button class="flex-1 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-800 text-sm font-medium cursor-pointer transition-all duration-200 hover:border-gray-300 hover:bg-gray-50">
+            <span class="text-blue-600">Facebook</span>
+          </button>
+          <button class="flex-1 py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-800 text-sm font-medium cursor-pointer transition-all duration-200 hover:border-gray-300 hover:bg-gray-50">
+            <span class="text-gray-800">Github</span>
+          </button>
         </div>
       </div>
     </div>
+    
+    <!-- Footer qui prend tout l'espace horizontal disponible -->
+    <footer class="w-full border-t border-gray-200 bg-gray-50 py-16 px-8">
+      <div class="text-center">
+        <p class="text-gray-600 text-xs m-0">2025 Urbex Chronicles - Exploration urbaine sécurisée</p>
+      </div>
+    </footer>
   </div>
 </template>
 
 <script setup>
-import { useAuth } from '../../composables/useAuth.js'
+// import { useAuth } from '../composables/useAuth.js'
+
 // Meta de la page
 definePageMeta({
   layout: false,
-  title: 'Connexion - CMS URBEX CHRONICLES',
-  middleware: 'guest'
+  title: 'Connexion - Urbex Chronicles',
+  // middleware: 'guest' // Temporairement désactivé pour debug
 })
 
 // Head configuration
 useHead({
-  title: 'Connexion - CMS URBEX CHRONICLES'
+  title: 'Connexion - Urbex Chronicles'
 })
 
 // Composables (client-only to avoid SSR hydration mismatch)
 const router = useRouter()
-let loginFn
-let authLoading
-if (process.client) {
-  const auth = useAuth()
-  loginFn = auth.login
-  authLoading = auth.isLoading
-}
 
-// État réactif
+// État réactif simple
 const formData = reactive({
-  email: '',
+  nom: '',
   password: ''
 })
 
 const errors = reactive({
-  email: '',
+  nom: '',
   password: ''
 })
 
 const globalError = ref('')
-
-// Utiliser le isLoading du composable
-const isLoading = computed(() => authLoading?.value ?? false)
+const isLoading = ref(false)
 
 // Computed
 const isFormValid = computed(() => {
-  return formData.email.trim() && formData.password.trim()
+  return formData.nom.trim() && formData.password.trim()
 })
 
 // Méthodes
 const validateForm = () => {
-  errors.email = ''
+  errors.nom = ''
   errors.password = ''
   globalError.value = ''
 
   let isValid = true
 
-  // Validation email
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!formData.email.trim()) {
-    errors.email = 'L\'email administrateur est requis'
-    isValid = false
-  } else if (!emailRegex.test(formData.email)) {
-    errors.email = 'Format d\'email invalide'
+  // Validation nom
+  if (!formData.nom.trim()) {
+    errors.nom = 'Le nom est requis'
     isValid = false
   }
 
@@ -153,191 +172,23 @@ const handleLogin = async () => {
   if (!validateForm()) return
 
   globalError.value = ''
+  isLoading.value = true
 
   try {
-    if (!loginFn) return
-    await loginFn(formData.email, formData.password)
+    // TODO: Implémenter la logique de connexion
+    console.log('Login:', formData.nom, formData.password)
+    
+    // Simulation d'une connexion
+    await new Promise(resolve => setTimeout(resolve, 1000))
     
     // Redirection vers le dashboard
     await router.push('/')
     
   } catch (error) {
-    console.error('Erreur de connexion admin:', error)
-    
-    if (error.message === 'Invalid credentials') {
-      globalError.value = 'Email ou mot de passe incorrect'
-    } else if (error.message.includes('429')) {
-      globalError.value = 'Trop de tentatives de connexion. Veuillez réessayer plus tard.'
-    } else if (error.message.includes('Network')) {
-      globalError.value = 'Erreur de connexion. Vérifiez que Strapi est démarré.'
-    } else {
-      globalError.value = error.message || 'Une erreur s\'est produite lors de la connexion.'
-    }
+    console.error('Erreur de connexion:', error)
+    globalError.value = 'Une erreur s\'est produite lors de la connexion.'
+  } finally {
+    isLoading.value = false
   }
 }
-
-// Vérifier si déjà connecté
-onMounted(async () => {
-  if (!process.client) return
-  const { isAuthenticated, checkAdminPermissions } = useAuth()
-  if (isAuthenticated.value) {
-    const isAdmin = await checkAdminPermissions()
-    if (isAdmin) await router.push('/')
-  }
-})
 </script>
-
-<style lang="scss" scoped>
-.login-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
-
-  &__container {
-    width: 100%;
-    max-width: 400px;
-  }
-
-  &__header {
-    text-align: center;
-    margin-bottom: 2rem;
-
-    &__title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin: 0 0 0.5rem 0;
-      letter-spacing: 1px;
-    }
-
-    &__subtitle {
-      color: #b8bcc8;
-      margin: 0;
-      font-size: 1rem;
-    }
-  }
-
-  &__form-container {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  }
-
-  &__form {
-    &__title {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #ffffff;
-      margin: 0 0 1.5rem 0;
-      text-align: center;
-    }
-
-    &__field {
-      margin-bottom: 1.25rem;
-
-      &__label {
-        display: block;
-        color: #e5e7eb;
-        font-size: 0.875rem;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-      }
-
-      &__input {
-        width: 100%;
-        padding: 0.75rem;
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: #ffffff;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-
-        &::placeholder {
-          color: #9ca3af;
-        }
-
-        &:focus {
-          outline: none;
-          border-color: #60a5fa;
-          background: rgba(255, 255, 255, 0.15);
-        }
-
-        &:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        &--error {
-          border-color: #f87171;
-        }
-      }
-
-      &__error {
-        color: #f87171;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-        display: block;
-      }
-    }
-
-    &__error {
-      background: rgba(248, 113, 113, 0.1);
-      border: 1px solid rgba(248, 113, 113, 0.3);
-      border-radius: 8px;
-      padding: 0.75rem;
-      color: #f87171;
-      font-size: 0.875rem;
-      margin-bottom: 1.25rem;
-    }
-
-    &__submit {
-      width: 100%;
-      padding: 0.875rem;
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-
-      &:hover:not(:disabled) {
-        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-        transform: translateY(-2px);
-      }
-
-      &:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        transform: none;
-      }
-    }
-  }
-
-  &__footer {
-    text-align: center;
-    margin-top: 1.5rem;
-    color: #b8bcc8;
-    font-size: 0.875rem;
-
-    &__link {
-      color: #60a5fa;
-      text-decoration: none;
-      font-weight: 500;
-      margin-left: 0.5rem;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-  }
-}
-</style>
