@@ -1,33 +1,35 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="flex min-h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <LayoutSidebar />
+    
+    <!-- Contenu principal -->
+    <div class="flex-1 ml-72">
+      <!-- Header simple -->
+      <header class="bg-white border-b border-gray-200 px-6 py-4">
+        <div class="flex justify-between items-center">
+          <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <div class="flex items-center gap-4">
+            <span class="text-sm text-gray-600">Connecté en tant qu'administrateur</span>
+            <button
+              @click="handleLogout"
+              class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium flex items-center gap-2"
+            >
+              🚪 Se déconnecter
+            </button>
+          </div>
+        </div>
+      </header>
       
-      <!-- Header avec navigation et déconnexion -->
-      <div class="flex justify-between items-center mb-8">
-        <div class="flex items-center">
-          <h1 class="text-3xl font-bold text-gray-900">Urbex Chronicles CMS</h1>
+      <!-- Contenu du dashboard -->
+      <main class="p-8">
+        <!-- Section de bienvenue -->
+        <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-8 mb-8">
+          <h2 class="text-4xl font-bold mb-4">Bienvenue dans votre espace d'administration</h2>
+          <p class="text-xl opacity-90">
+            Interface de gestion de contenu pour votre application d'exploration urbaine.
+          </p>
         </div>
-        <div class="flex items-center gap-4">
-          <span class="text-sm text-gray-600">Connecté en tant qu'administrateur</span>
-          <button
-            @click="handleLogout"
-            :disabled="isLoggingOut"
-            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span v-if="isLoggingOut">⏳</span>
-            <span v-else>🚪</span>
-            {{ isLoggingOut ? 'Déconnexion...' : 'Se déconnecter' }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Section de bienvenue -->
-      <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl p-8 mb-8">
-        <h2 class="text-4xl font-bold mb-4">Bienvenue dans votre espace d'administration</h2>
-        <p class="text-xl opacity-90">
-          Interface de gestion de contenu pour votre application d'exploration urbaine.
-        </p>
-      </div>
 
       <!-- Statistiques rapides -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -184,15 +186,12 @@
             Voir les statistiques →
           </button>
         </div>
-      </div>
+        </div>
 
-
-
+      </main>
     </div>
   </div>
-</template>
-
-<script setup>
+</template><script setup>
 // Meta de la page
 definePageMeta({
   title: 'Dashboard - Urbex Chronicles CMS'
@@ -214,8 +213,6 @@ const stats = ref({
   users: 156
 })
 
-const isLoggingOut = ref(false)
-
 // Méthodes
 const navigateToModule = (path) => {
   console.log(`Navigation vers: /${path}`)
@@ -223,8 +220,6 @@ const navigateToModule = (path) => {
 }
 
 const handleLogout = async () => {
-  isLoggingOut.value = true
-  
   try {
     // Supprimer le token d'authentification
     if (typeof window !== 'undefined') {
@@ -233,22 +228,12 @@ const handleLogout = async () => {
       document.cookie = 'authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     }
     
-    // Petit délai pour l'animation
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
     // Redirection vers la page de login
-    try {
-      await navigateTo('/login', { replace: true })
-    } catch (error) {
-      // Fallback en cas d'erreur
-      window.location.href = '/login'
-    }
+    await navigateTo('/login', { replace: true })
     
   } catch (error) {
     console.error('Erreur de déconnexion:', error)
     window.location.href = '/login'
-  } finally {
-    isLoggingOut.value = false
   }
 }
 </script>
