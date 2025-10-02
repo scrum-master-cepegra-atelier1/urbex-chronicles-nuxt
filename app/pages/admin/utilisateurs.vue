@@ -5,8 +5,8 @@
   <LayoutTopBar />
   
   <!-- Contenu principal -->
-  <main class="pl-5 ml-0 lg:ml-72 mt-16 me-16 lg:mt-20 h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)] bg-white overflow-hidden">
-    <div class="h-full flex flex-col p-4 sm:p-6 lg:p-8">
+  <main class="pl-5 ml-0 lg:ml-72 mt-16 me-16 lg:mt-20 min-h-screen bg-white">
+    <div class="p-4 sm:p-6 lg:p-8">
       <!-- Page Title -->
       <div class="mb-12 flex-shrink-0">
         <h1 class="text-gray-900" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Utilisateurs</h1>
@@ -32,9 +32,9 @@
         </div>
 
         <!-- Users Management Table -->
-        <div class="h-[480px] overflow-hidden">
+        <div class="mb-12">
           <h2 class="text-2xl font-bold text-gray-900 pb-6" style="font-family: 'Do Hyeon', sans-serif;">Gestion des utilisateurs</h2>
-          <div class="bg-white rounded-lg border border-gray-200 h-full overflow-hidden flex flex-col">
+          <div class="bg-white rounded-lg border border-gray-200">
             <!-- Table Header -->
             <div class="bg-gray-50 px-6 py-6 border-b border-gray-200">
               <div class="grid grid-cols-7 gap-6 text-base font-medium text-gray-700">
@@ -49,7 +49,7 @@
             </div>
 
             <!-- Table Body -->
-            <div class="flex-1 overflow-y-auto">
+            <div class="max-h-96 overflow-y-auto">
               <div 
                 v-for="(user, index) in users" 
                 :key="index"
@@ -187,10 +187,8 @@ const deleteUser = (index) => {
 </script>
 
 <style>
-/* Forcer l'absence de scroll sur toute la page */
+/* Permettre le scroll normal sur toutes les pages */
 html, body {
-  overflow: hidden !important;
-  height: 100vh;
   margin: 0;
   padding: 0;
 }

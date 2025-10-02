@@ -5,8 +5,8 @@
   <LayoutTopBar />
   
   <!-- Contenu principal -->
-  <main class="pl-5 ml-0 lg:ml-72 mt-16 me-16 lg:mt-20 h-[calc(100vh-4rem)] lg:h-[calc(100vh-5rem)] bg-white overflow-hidden">
-    <div class="h-full flex flex-col p-4 sm:p-6 lg:p-8">
+  <main class="pl-5 ml-0 lg:ml-72 mt-16 me-16 lg:mt-20 min-h-screen bg-white">
+    <div class="p-4 sm:p-6 lg:p-8">
       <!-- Page Title -->
       <div class="mb-12 flex-shrink-0">
         <h1 class="text-gray-900" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Dashboard</h1>
@@ -95,10 +95,8 @@ useHead({
 </script>
 
 <style>
-/* Forcer l'absence de scroll sur toute la page */
+/* Permettre le scroll normal sur toutes les pages */
 html, body {
-  overflow: hidden !important;
-  height: 100vh;
   margin: 0;
   padding: 0;
 }
