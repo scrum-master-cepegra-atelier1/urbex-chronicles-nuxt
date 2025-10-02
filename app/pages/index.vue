@@ -70,12 +70,12 @@
 <script setup>
 // Meta de la page
 definePageMeta({
-  title: 'Dashboard - Urbex Chronicles CMS'
+  title: 'Dashboard'
 })
 
 // Head configuration
 useHead({
-  title: 'Dashboard - Urbex Chronicles CMS',
+  title: 'Dashboard',
   link: [
     {
       rel: 'preconnect',

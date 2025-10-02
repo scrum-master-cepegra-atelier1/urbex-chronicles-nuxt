@@ -78,7 +78,7 @@ const navigationItems = [
   },
   {
     name: 'Utilisateurs',
-    href: '/admin/users',
+    href: '/admin/utilisateurs',
     icon: '👥' // Icône temporaire - sera remplacée
   },
   {

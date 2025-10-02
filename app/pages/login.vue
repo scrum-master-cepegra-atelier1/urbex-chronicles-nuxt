@@ -114,14 +114,11 @@ import AuthService from '../service/AuthService.js'
 
 // Meta de la page
 definePageMeta({
-  layout: false,
-  title: 'Connexion - Urbex Chronicles',
-  // middleware: 'guest' // Temporairement désactivé pour debug
+  title: 'Connexion'
 })
 
-// Head configuration
 useHead({
-  title: 'Connexion - Urbex Chronicles'
+  title: 'Connexion'
 })
 
 // Composables (client-only to avoid SSR hydration mismatch)
