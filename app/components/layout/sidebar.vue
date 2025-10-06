@@ -82,8 +82,8 @@ const navigationItems = [
     icon: '👥' // Icône temporaire - sera remplacée
   },
   {
-    name: 'Spots urbex',
-    href: '/admin/spots',
+    name: 'Circuits',
+    href: '/admin/circuits',
     icon: '📍' // Icône temporaire - sera remplacée
   },
   {

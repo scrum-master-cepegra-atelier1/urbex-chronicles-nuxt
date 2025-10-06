@@ -33,7 +33,64 @@
 
         <!-- Users Management Table -->
         <div class="mb-12">
-          <h2 class="text-2xl font-bold text-gray-900 pb-6" style="font-family: 'Do Hyeon', sans-serif;">Gestion des utilisateurs</h2>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900" style="font-family: 'Do Hyeon', sans-serif;">Gestion des utilisateurs</h2>
+            <div class="flex space-x-3">
+              <button
+                @click="testStrapi"
+                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors duration-200 flex items-center"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Test Strapi
+              </button>
+              <button
+                @click="refreshUsers"
+                :disabled="loading"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-md transition-colors duration-200 flex items-center"
+              >
+                <svg class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                {{ loading ? 'Chargement...' : 'Actualiser' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Message d'erreur -->
+          <div v-if="error" class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <strong>Erreur de connexion :</strong>
+            </div>
+            <p class="mt-1">{{ error }}</p>
+            <div class="mt-2 text-sm">
+              <p><strong>Solutions possibles :</strong></p>
+              <ul class="list-disc list-inside mt-1 space-y-1">
+                <li>Vérifiez que Strapi est démarré : <code class="bg-red-200 px-1 rounded">npm run develop</code></li>
+                <li>Connectez-vous en tant qu'administrateur dans Strapi : <code class="bg-red-200 px-1 rounded">http://localhost:1337/admin</code></li>
+                <li>Vérifiez que votre token admin est valide (reconnectez-vous si nécessaire)</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Message si aucun utilisateur -->
+          <div v-if="!loading && !error && users.length === 0" class="mb-4 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div class="text-center">
+              <svg class="w-12 h-12 mx-auto text-yellow-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 18.5c-.77.833.192 2.5 1.732 2.5z"/>
+              </svg>
+              <h3 class="text-lg font-medium text-yellow-800 mb-1">Aucun utilisateur trouvé</h3>
+              <p class="text-yellow-700">
+                Aucun utilisateur n'est enregistré dans votre base de données Strapi.
+                <br>Créez des utilisateurs dans l'interface d'administration de Strapi.
+              </p>
+            </div>
+          </div>
+
           <div class="bg-white rounded-lg border border-gray-200">
             <!-- Table Header -->
             <div class="bg-gray-50 px-6 py-6 border-b border-gray-200">
@@ -50,21 +107,38 @@
 
             <!-- Table Body -->
             <div class="max-h-96 overflow-y-auto">
+              <!-- Loading skeleton -->
+              <div v-if="loading" class="px-6 py-6">
+                <div class="animate-pulse space-y-4">
+                  <div v-for="n in 3" :key="n" class="grid grid-cols-7 gap-6">
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Users list -->
               <div 
-                v-for="(user, index) in users" 
-                :key="index"
+                v-else
+                v-for="user in users" 
+                :key="user.id"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
                 <div class="grid grid-cols-7 gap-6 items-center text-base">
-                  <div class="text-gray-900">{{ user.id }}</div>
-                  <div class="text-gray-600">{{ user.nom }}</div>
-                  <div class="text-gray-600">{{ user.prenom }}</div>
-                  <div class="text-gray-600">{{ user.email }}</div>
-                  <div class="text-gray-600">{{ user.level }}</div>
-                  <div class="text-gray-600">{{ user.xp }}</div>
+                  <div class="text-gray-900 font-mono text-sm">{{ user.id }}</div>
+                  <div class="text-gray-900 font-medium">{{ user.lastname || user.nom || user.username || 'N/A' }}</div>
+                  <div class="text-gray-900 font-medium">{{ user.firstname || user.prenom || user.username || 'N/A' }}</div>
+                  <div class="text-gray-600">{{ user.email || 'N/A' }}</div>
+                  <div class="text-gray-900 font-bold">{{ user.level || user.xp_level || 1 }}</div>
+                  <div class="text-gray-900 font-bold">{{ user.xp || user.experience_points || 0 }}</div>
                   <div class="flex items-center space-x-3">
                     <button
-                      @click="editUser(index)"
+                      @click="editUser(user)"
                       class="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-2"
                       title="Modifier"
                     >
@@ -73,7 +147,7 @@
                       </svg>
                     </button>
                     <button
-                      @click="deleteUser(index)"
+                      @click="handleDeleteUser(user.id)"
                       class="text-red-600 hover:text-red-800 transition-colors duration-200 p-2"
                       title="Supprimer"
                     >
@@ -91,10 +165,111 @@
       </div>
     </div>
   </main>
+  
+  <!-- Modal d'édition d'utilisateur -->
+  <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-gray-900">Modifier l'utilisateur</h3>
+        <button @click="cancelEdit" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Formulaire d'édition -->
+      <div v-if="editingUser" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Nom -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+            <input 
+              v-model="editingUser.lastname"
+              type="text" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Nom de famille"
+            />
+          </div>
+          
+          <!-- Prénom -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+            <input 
+              v-model="editingUser.firstname"
+              type="text" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Prénom"
+            />
+          </div>
+        </div>
+        
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input 
+            v-model="editingUser.email"
+            type="email" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Email"
+          />
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Level -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
+            <input 
+              v-model="editingUser.level"
+              type="number" 
+              min="1"
+              max="100"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Niveau"
+            />
+          </div>
+          
+          <!-- XP -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">XP</label>
+            <input 
+              v-model="editingUser.xp"
+              type="number" 
+              min="0"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Points d'expérience"
+            />
+          </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <button
+            @click="cancelEdit"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200"
+          >
+            Annuler
+          </button>
+          <button
+            @click="saveEditUser"
+            :disabled="!editingUser.email"
+            :class="editingUser.email ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+            class="px-6 py-2 rounded-md transition-colors duration-200 flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Sauvegarder
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 
 // Meta de la page
 definePageMeta({
@@ -121,68 +296,97 @@ useHead({
   ]
 })
 
-// États réactifs - Suppression du formulaire d'ajout
-// const newUser = ref({}) - Plus nécessaire
+// Utilisation du composable pour la gestion des utilisateurs
+const { 
+  users, 
+  loading, 
+  error, 
+  fetchUsers, 
+  deleteUser,
+  testConnection
+} = await useUsers()
 
-// Données mock des utilisateurs
-const users = ref([
-  {
-    id: 'xxx',
-    nom: 'Charline',
-    prenom: 'Charline',
-    email: 'Charline',
-    level: '12',
-    xp: '1230'
-  },
-  {
-    id: 'xxx',
-    nom: 'Declan',
-    prenom: 'Huanay',
-    email: 'Huanay',
-    level: '4',
-    xp: '450'
-  },
-  {
-    id: 'xxx',
-    nom: 'James',
-    prenom: 'Neponucet',
-    email: 'Neponucet',
-    level: '10',
-    xp: '5600'
-  },
-  {
-    id: 'xxx',
-    nom: 'Alexis',
-    prenom: 'Visa',
-    email: 'Visa',
-    level: '1000000',
-    xp: '100000000'
-  },
-  {
-    id: 'xxx',
-    nom: 'Valentin',
-    prenom: 'Philippart',
-    email: 'Philippart',
-    level: '2',
-    xp: '280'
-  }
-])
+// Chargement initial des utilisateurs
+await fetchUsers()
+
+// États pour la modal d'édition
+const showEditModal = ref(false)
+const editingUser = ref(null)
 
 // Computed properties
-const totalUsers = computed(() => 129) // Selon votre maquette
-const newUsers = computed(() => 11) // Selon votre maquette
+const totalUsers = computed(() => users.value.length)
+const newUsers = computed(() => {
+  // Calculer les nouveaux utilisateurs (par exemple, créés dans les 30 derniers jours)
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  
+  return users.value.filter(user => {
+    if (user.createdAt) {
+      return new Date(user.createdAt) > thirtyDaysAgo
+    }
+    return false
+  }).length
+})
 
-// Fonctions simplifiées pour les utilisateurs
-const editUser = (index) => {
-  // TODO: Implémenter la modification
-  console.log('Modifier l\'utilisateur:', users.value[index])
+// Fonctions pour les actions utilisateur
+const editUser = (user) => {
+  editingUser.value = { ...user }
+  showEditModal.value = true
 }
 
-const deleteUser = (index) => {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-    users.value.splice(index, 1)
-    console.log('Utilisateur supprimé')
+const saveEditUser = async () => {
+  if (!editingUser.value) return
+  
+  try {
+    // Préparer les données pour Strapi
+    const userData = {
+      lastname: editingUser.value.lastname || editingUser.value.nom,
+      firstname: editingUser.value.firstname || editingUser.value.prenom,
+      email: editingUser.value.email,
+      level: editingUser.value.level || editingUser.value.xp_level || 1,
+      xp: editingUser.value.xp || editingUser.value.experience_points || 0
+    }
+    
+    console.log('Utilisateur mis à jour:', userData)
+    
+    // TODO: Implémenter updateUser dans le composable
+    // await updateUser(editingUser.value.id, userData)
+    
+    // Fermer la modal
+    showEditModal.value = false
+    editingUser.value = null
+    
+    // Rafraîchir la liste
+    await fetchUsers()
+    
+  } catch (err) {
+    console.error('Erreur lors de la mise à jour de l\'utilisateur:', err)
   }
+}
+
+const cancelEdit = () => {
+  showEditModal.value = false
+  editingUser.value = null
+}
+
+const handleDeleteUser = async (userId) => {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+    const success = await deleteUser(userId)
+    if (!success && error.value) {
+      // Afficher l'erreur pendant 5 secondes
+      setTimeout(() => {
+        error.value = null
+      }, 5000)
+    }
+  }
+}
+
+const refreshUsers = async () => {
+  await fetchUsers()
+}
+
+const testStrapi = async () => {
+  await testConnection()
 }
 </script>
 

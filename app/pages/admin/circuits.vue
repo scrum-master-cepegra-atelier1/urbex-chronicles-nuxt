@@ -9,24 +9,61 @@
     <div class="p-4 sm:p-6 lg:p-8">
       <!-- Page Title -->
       <div class="mb-12 flex-shrink-0">
-        <h1 class="text-gray-900" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Spots urbex</h1>
+        <h1 class="text-gray-900" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Circuits</h1>
+        
+        <!-- Indicateur de chargement -->
+        <div v-if="loading" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-blue-500 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span class="text-blue-800">Chargement des circuits depuis Strapi...</span>
+          </div>
+        </div>
+        
+        <!-- Message de succès -->
+        <div v-if="successMessage" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span class="text-green-800">{{ successMessage }}</span>
+          </div>
+        </div>
+        
+        <!-- Message d'erreur -->
+        <div v-if="error" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-red-800">{{ error }}</span>
+            <button @click="refreshData" class="ml-4 text-red-600 hover:text-red-800 underline">Réessayer</button>
+          </div>
+        </div>
       </div>
       
       <div class="ml-8">
         
-        <!-- Stats Section -->
+        <!-- Stats Section dynamiques -->
         <div class="mb-12 flex-shrink-0">
           <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-12">
-            <!-- Spots actifs -->
+            <!-- Total circuits -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ totalSpots }}</div>
-              <div class="text-base lg:text-lg text-gray-600">Spots actifs</div>
+              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ stats.total }}</div>
+              <div class="text-base lg:text-lg text-gray-600">Total circuits</div>
             </div>
 
-            <!-- Nouveaux spots suggérés -->
+            <!-- Circuits actifs -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ newSpotsSuggested }}</div>
-              <div class="text-base lg:text-lg text-gray-600">Nouveaux spots suggérés</div>
+              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ stats.active }}</div>
+              <div class="text-base lg:text-lg text-gray-600">Circuits actifs</div>
+            </div>
+
+            <!-- Nouveaux circuits suggérés -->
+            <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ stats.new }}</div>
+              <div class="text-base lg:text-lg text-gray-600">Nouveaux (7 jours)</div>
             </div>
           </div>
         </div>
@@ -34,26 +71,47 @@
         <!-- Add Circuit Section -->
         <div class="mb-12 flex-shrink-0">
 
-          <!-- Formulaire Principal -->
-          <div class="bg-white mb-12 rounded-2xl border-gray-300 overflow-hidden">
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-500 to-gray-800 px-8 py-6">
-              <div>
-                <h2 class="text-2xl font-bold text-white flex items-center" style="font-family: 'Do Hyeon', sans-serif;">
-                  <svg class="w-8 h-8 mr-3 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <!-- Formulaire Principal avec onglet déroulant -->
+          <div class="bg-white mb-12 rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+            <!-- Header cliquable -->
+            <div 
+              @click="toggleAddForm"
+              class="bg-gradient-to-r from-blue-500 to-gray-800 px-8 py-6 cursor-pointer hover:from-blue-600 hover:to-gray-900 transition-all duration-200"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="text-2xl font-bold text-white flex items-center" style="font-family: 'Do Hyeon', sans-serif;">
+                    <svg class="w-8 h-8 mr-3 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Ajouter un nouveau circuit
+                  </h2>
+                  <p class="text-blue-100 mt-1">
+                    Créez un nouveau circuit urbex avec ses informations et localisation
+                  </p>
+                </div>
+                <!-- Icône de déroulement -->
+                <div class="flex items-center">
+                  <svg 
+                    :class="{ 'rotate-180': showAddForm }" 
+                    class="w-6 h-6 text-blue-200 transform transition-transform duration-200" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                   </svg>
-                  Ajouter un nouveau circuit
-                </h2>
-                <p class="text-blue-100 mt-1">
-                  Créez un nouveau spot urbex avec ses informations et localisation
-                </p>
+                </div>
               </div>
             </div>
 
-            <!-- Contenu du formulaire -->
-            <div class="p-8">
+            <!-- Contenu du formulaire (collapsible) -->
+            <div 
+              v-show="showAddForm" 
+              class="p-8 transition-all duration-300 ease-in-out"
+              :class="showAddForm ? 'animate-fade-in' : ''"
+            >
               <!-- Formulaire complet -->
               <div class="space-y-8">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -167,15 +225,18 @@
                   <div class="pt-6 border-t border-gray-100">
                     <div class="flex flex-col sm:flex-row gap-3">
                       <button
-                        @click="createSpot"
-                        :disabled="!canCreateSpot"
-                        :class="canCreateSpot ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+                        @click="handleCreateCircuit"
+                        :disabled="!canCreateCircuit || loading"
+                        :class="canCreateCircuit && !loading ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
                         class="flex-1 px-6 py-3 rounded-lg transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center"
                       >
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg v-if="loading" class="w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <svg v-else class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
-                        Créer le circuit
+                        {{ loading ? 'Création...' : 'Créer le circuit' }}
                       </button>
                       <button
                         @click="clearForm"
@@ -213,21 +274,31 @@
 
             <!-- Table Body -->
             <div class="max-h-96 overflow-y-auto">
+              <!-- Message si aucun circuit -->
+              <div v-if="!loading && circuits.length === 0" class="px-6 py-12 text-center">
+                <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7"></path>
+                </svg>
+                <p class="mt-4 text-lg text-gray-500">Aucun circuit trouvé</p>
+                <p class="text-sm text-gray-400">Créez votre premier circuit ou vérifiez votre connexion Strapi</p>
+              </div>
+              
+              <!-- Liste des circuits -->
               <div 
                 v-for="(circuit, index) in circuits" 
-                :key="index"
+                :key="circuit.id || index"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
                 <div class="grid grid-cols-7 gap-6 items-center text-base">
-                  <div class="text-gray-900 font-medium">{{ circuit.name }}</div>
-                  <div class="text-gray-600 truncate">{{ circuit.description }}</div>
-                  <div class="text-gray-600">{{ circuit.duration }}min</div>
-                  <div class="text-gray-600">{{ circuit.address.city }}</div>
+                  <div class="text-gray-900 font-medium">{{ circuit.name || 'N/A' }}</div>
+                  <div class="text-gray-600 truncate">{{ circuit.description || 'Aucune description' }}</div>
+                  <div class="text-gray-600">{{ formatDuration(circuit.duration) }}</div>
+                  <div class="text-gray-600">{{ getCircuitAddress(circuit) }}</div>
                   <div class="text-gray-600 flex items-center">
                     <svg class="w-4 h-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                     </svg>
-                    {{ circuit.like }}
+                    {{ circuit.likes || circuit.like || 0 }}
                   </div>
                   
                   <div class="text-gray-600">
@@ -235,12 +306,33 @@
                       @click="showCommentsOverlay(circuit)" 
                       class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs cursor-pointer hover:bg-green-200 transition-colors duration-200"
                     >
-                      {{ circuit.comments.length }} commentaires
+                      {{ (circuit.comments || []).length }} commentaires
                     </span>
                   </div>
                   <div class="flex items-center space-x-3">
+                    <!-- Bouton Archiver/Désarchiver -->
                     <button
-                      @click="editCircuit(index)"
+                      @click="handleToggleStatus(circuit)"
+                      :class="circuit.published ? 'text-orange-600 hover:text-orange-800' : 'text-green-600 hover:text-green-800'"
+                      class="transition-colors duration-200 p-2"
+                      :title="circuit.published ? 'Archiver' : 'Désarchiver'"
+                    >
+                      <!-- Icône d'archivage (pour circuits publiés) -->
+                      <svg v-if="circuit.published" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14l-1 7H6L5 4z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4V2a1 1 0 011-1h12a1 1 0 011 1v2"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9h4"/>
+                      </svg>
+                      <!-- Icône de désarchivage (pour circuits archivés) -->
+                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14l-1 7H6L5 4z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4V2a1 1 0 011-1h12a1 1 0 011 1v2"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9l2-2m0 0l2 2m-2-2v6"/>
+                      </svg>
+                    </button>
+                    
+                    <button
+                      @click="handleEditCircuit(circuit)"
                       class="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-2"
                       title="Modifier"
                     >
@@ -249,7 +341,7 @@
                       </svg>
                     </button>
                     <button
-                      @click="deleteCircuit(index)"
+                      @click="handleDeleteCircuit(circuit)"
                       class="text-red-600 hover:text-red-800 transition-colors duration-200 p-2"
                       title="Supprimer"
                     >
@@ -268,7 +360,42 @@
         
       </div>
     </div>
-  </main>  <!-- Modal d'ajout de spot -->
+  </main>
+  
+  <!-- Modal de confirmation de suppression -->
+  <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <div class="flex items-center mb-4">
+        <svg class="w-6 h-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+        </svg>
+        <h3 class="text-lg font-semibold text-gray-900">Confirmer la suppression</h3>
+      </div>
+      
+      <p class="text-gray-600 mb-6">
+        Êtes-vous sûr de vouloir supprimer le circuit 
+        <span class="font-semibold">"{{ circuitToDelete?.name }}"</span> ? 
+        Cette action est irréversible.
+      </p>
+      
+      <div class="flex justify-end space-x-3">
+        <button
+          @click="showDeleteModal = false; circuitToDelete = null"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          @click="confirmDelete"
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+        >
+          Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal d'ajout de spot -->
   <div v-if="showAddModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-8 max-w-md w-full mx-4">
       <h3 class="text-xl font-bold text-gray-900 mb-6">Ajoutez votre spot</h3>
@@ -371,9 +498,19 @@
           </svg>
           <p class="mt-4 text-lg text-gray-600">Glissez votre image ici</p>
           <p class="text-sm text-gray-500">ou</p>
-          <button class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+          <button 
+            @click="triggerFileUpload"
+            class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
             Parcourir les fichiers
           </button>
+          <input 
+            ref="fileInput"
+            type="file" 
+            accept="image/*" 
+            @change="handleFileUpload" 
+            class="hidden"
+          />
         </div>
         
         <!-- Images récentes ou galerie -->
@@ -555,10 +692,186 @@
       </div>
     </div>
   </div>
+  
+  <!-- Modal d'édition de commentaire -->
+  <div v-if="showEditCommentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-gray-900">Modifier le commentaire</h3>
+        <button @click="cancelEditComment" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Formulaire -->
+      <div v-if="editingComment" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Auteur</label>
+          <input 
+            v-model="editingComment.author"
+            type="text" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Nom de l'auteur"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Commentaire</label>
+          <textarea 
+            v-model="editingComment.content"
+            rows="4"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Contenu du commentaire"
+          ></textarea>
+        </div>
+      </div>
+      
+      <!-- Actions -->
+      <div class="flex justify-end space-x-3 mt-6">
+        <button
+          @click="cancelEditComment"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          @click="saveEditComment"
+          :disabled="!editingComment?.content || !editingComment?.author"
+          :class="editingComment?.content && editingComment?.author ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+          class="px-4 py-2 text-sm font-medium rounded-md transition-colors"
+        >
+          Sauvegarder
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal d'édition de circuit -->
+  <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-gray-900">Modifier le circuit</h3>
+        <button @click="showEditModal = false; editingCircuit = null" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Formulaire d'édition -->
+      <div v-if="editingCircuit" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Colonne gauche -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Nom du circuit</label>
+              <input 
+                v-model="editingCircuit.name"
+                type="text" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nom du circuit"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <textarea 
+                v-model="editingCircuit.description"
+                rows="4"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Description du circuit"
+              ></textarea>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Durée (minutes)</label>
+              <input 
+                v-model="editingCircuit.duration"
+                type="number" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Durée en minutes"
+              />
+            </div>
+          </div>
+          
+          <!-- Colonne droite -->
+          <div class="space-y-4">
+            <div v-if="editingCircuit.address">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
+              <div class="space-y-2">
+                <input 
+                  v-model="editingCircuit.address.street"
+                  type="text" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Rue"
+                />
+                <input 
+                  v-model="editingCircuit.address.city"
+                  type="text" 
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Ville"
+                />
+                <div class="grid grid-cols-2 gap-2">
+                  <input 
+                    v-model="editingCircuit.address.zipCode"
+                    type="text" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Code postal"
+                  />
+                  <input 
+                    v-model="editingCircuit.address.country"
+                    type="text" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Pays"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+              <select 
+                v-model="editingCircuit.published"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option :value="true">Publié</option>
+                <option :value="false">Archivé</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <button
+            @click="showEditModal = false; editingCircuit = null"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200"
+          >
+            Annuler
+          </button>
+          <button
+            @click="saveEditCircuit"
+            :disabled="!editingCircuit.name"
+            :class="editingCircuit.name ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+            class="px-6 py-2 rounded-md transition-colors duration-200 flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Sauvegarder
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 // Meta de la page
 definePageMeta({
@@ -585,25 +898,56 @@ useHead({
   ]
 })
 
-// États réactifs
+// Composable pour les circuits dynamiques avec Strapi
+const {
+  circuits,
+  loading,
+  error,
+  totalCircuits,
+  activeCircuits,
+  newCircuitsSuggested,
+  fetchCircuits,
+  createCircuit,
+  updateCircuit,
+  deleteCircuit,
+  toggleCircuitStatus,
+  formatDate,
+  formatDuration,
+  getCircuitAddress,
+  testConnection
+} = useCircuits()
+
+// États locaux pour l'interface
+const showAddForm = ref(false)
+const selectedCircuit = ref(null)
+const showDeleteModal = ref(false)
+const circuitToDelete = ref(null)
+const editingCircuit = ref(null)
+const showEditModal = ref(false)
+const successMessage = ref('')
+const refreshing = ref(false)
+
+// États réactifs pour le formulaire
 const newCircuit = ref({
   name: '',
   description: '',
-  duration: null,
+  duration: 60,
+  difficulty: 'Facile',
   address: {
     street: '',
     city: '',
     zipCode: '',
     country: 'Belgique'
   },
-  comments: []
+  published: false
 })
 
+// États pour les modals
 const showAddModal = ref(false)
 const showImageOverlay = ref(false)
 const showUrlOverlay = ref(false)
 const showCommentsModal = ref(false)
-const selectedCircuit = ref(null)
+const showEditCommentModal = ref(false)
 const tempUrl = ref('')
 const urlType = ref('website')
 const urlDescription = ref('')
@@ -614,104 +958,172 @@ const modalSpot = ref({
   url: ''
 })
 
-// Données mock des circuits urbex
-const circuits = ref([
-  {
-    name: 'Circuit Château de Charleroi',
-    description: 'Exploration des ruines industrielles de Charleroi',
-    duration: 120,
-    like: 15,
-    address: {
-      street: 'Rue des Abandonnés 123',
-      city: 'Charleroi',
-      zipCode: '6000',
-      country: 'Belgique'
-    },
-    missions: [
-      { title: 'Explorer la tour principale', description: 'Montez jusqu\'au sommet de la tour' },
-      { title: 'Photographier les machines', description: 'Capturez les anciens équipements' }
-    ],
-    comments: [
-      { author: 'Explorer1', content: 'Circuit magnifique avec de superbes vues ! La montée vers la tour principale est un peu difficile mais ça vaut vraiment le coup.' },
-      { author: 'UrbanPhotographer', content: 'Parfait pour les photos, surtout au coucher du soleil. Attention aux gravats par contre.' },
-      { author: 'AdventureSeeker', content: 'J\'ai adoré ce circuit ! L\'atmosphère est incroyable et on sent vraiment l\'histoire des lieux.' }
-    ]
-  },
-  {
-    name: 'Circuit Urbain Liège',
-    description: 'Parcours dans les anciens quartiers industriels de Liège',
-    duration: 90,
-    like: 8,
-    address: {
-      street: 'Avenue du Patrimoine 45',
-      city: 'Liège',
-      zipCode: '4000',
-      country: 'Belgique'
-    },
-    missions: [
-      { title: 'Photographier les graffitis', description: 'Capturez l\'art urbain unique' }
-    ],
-    comments: [
-      { author: 'CityExplorer', content: 'Circuit urbain vraiment sympa, les graffitis sont magnifiques !' },
-      { author: 'LocalGuide', content: 'Je recommande ce parcours, accessible et plein de découvertes.' }
-    ]
+// États pour l'édition de commentaires
+const editingComment = ref(null)
+const editingCommentIndex = ref(-1)
+const editingCommentCircuit = ref(null)
+
+// Référence pour l'input file
+const fileInput = ref(null)
+
+// Fonction pour basculer l'affichage du formulaire
+const toggleAddForm = () => {
+  showAddForm.value = !showAddForm.value
+  if (showAddForm.value) {
+    resetForm()
   }
-])
-
-// Computed properties
-const totalSpots = computed(() => 23) // Selon votre maquette
-const newSpotsSuggested = computed(() => 5) // Selon votre maquette
-
-// Validation simple pour la création
-const canCreateSpot = computed(() => {
-  return newCircuit.value.name && newCircuit.value.description && newCircuit.value.address.city
-})
-
-// Fonctions pour les circuits
-const addCircuit = () => {
-  showAddModal.value = true
 }
 
-const clearForm = () => {
+// Réinitialiser le formulaire
+const resetForm = () => {
   newCircuit.value = {
     name: '',
     description: '',
-    duration: null,
+    duration: 60,
+    difficulty: 'Facile',
     address: {
       street: '',
       city: '',
       zipCode: '',
       country: 'Belgique'
     },
-    comments: []
+    published: false
   }
 }
 
-const createSpot = () => {
-  if (canCreateSpot.value) {
-    // Ajouter le nouveau spot à la liste
-    const newSpot = {
-      name: newCircuit.value.name,
-      description: newCircuit.value.description,
-      duration: newCircuit.value.duration || 60,
-      like: 0,
-      address: { ...newCircuit.value.address },
-      missions: [],
-      comments: []
+// Validation simple pour la création
+const canCreateCircuit = computed(() => {
+  return newCircuit.value.name && newCircuit.value.description && newCircuit.value.address.city
+})
+
+// Fonctions pour la gestion dynamique des circuits
+const handleCreateCircuit = async () => {
+  try {
+    await createCircuit(newCircuit.value)
+    showSuccessMessage('Circuit créé avec succès !')
+    resetForm()
+    showAddForm.value = false
+    // Rafraîchir la liste
+    await fetchCircuits()
+  } catch (err) {
+    console.error('Erreur lors de la création:', err)
+  }
+}
+
+const handleDeleteCircuit = async (circuit) => {
+  circuitToDelete.value = circuit
+  showDeleteModal.value = true
+}
+
+const confirmDelete = async () => {
+  if (circuitToDelete.value) {
+    const success = await deleteCircuit(circuitToDelete.value.id)
+    if (success) {
+      showSuccessMessage('Circuit supprimé avec succès !')
+    } else if (error.value) {
+      // Afficher l'erreur comme message d'erreur
+      showSuccessMessage(error.value, 'error')
+      // Réinitialiser l'erreur après 5 secondes
+      setTimeout(() => {
+        error.value = null
+      }, 5000)
     }
-    
-    circuits.value.push(newSpot)
-    
-    // Afficher une notification de succès
-    console.log('Spot créé avec succès:', newSpot)
-    
-    // Réinitialiser le formulaire
-    clearForm()
+    showDeleteModal.value = false
+    circuitToDelete.value = null
+  }
+}
+
+const handleEditCircuit = (circuit) => {
+  editingCircuit.value = { ...circuit }
+  showEditModal.value = true
+}
+
+const saveEditCircuit = async () => {
+  try {
+    await updateCircuit(editingCircuit.value.id, editingCircuit.value)
+    showSuccessMessage('Circuit mis à jour avec succès !')
+    showEditModal.value = false
+    editingCircuit.value = null
+    await fetchCircuits()
+  } catch (err) {
+    console.error('Erreur lors de la mise à jour:', err)
+  }
+}
+
+const handleToggleStatus = async (circuit) => {
+  try {
+    await toggleCircuitStatus(circuit.id, !circuit.published)
+    showSuccessMessage(`Circuit ${circuit.published ? 'archivé' : 'désarchivé'} avec succès !`)
+    await fetchCircuits()
+  } catch (err) {
+    console.error('Erreur lors du changement de statut:', err)
+  }
+}
+
+// Fonction pour afficher un message de succès
+const showSuccessMessage = (message) => {
+  successMessage.value = message
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 3000)
+}
+
+// Fonction pour rafraîchir les données
+const refreshData = async () => {
+  refreshing.value = true
+  await fetchCircuits()
+  refreshing.value = false
+  showSuccessMessage('Données rafraîchies !')
+}
+
+// Statistiques calculées
+const stats = computed(() => ({
+  total: totalCircuits.value,
+  active: activeCircuits.value,
+  new: newCircuitsSuggested.value
+}))
+
+// Chargement initial des données
+onMounted(async () => {
+  console.log('🚀 Chargement des circuits...')
+  await fetchCircuits()
+})
+
+// Fonctions anciennes pour compatibilité (modifiées)
+const addCircuit = () => {
+  showAddModal.value = true
+}
+
+const clearForm = () => {
+  resetForm()
+}
+
+// Fonction wrapper pour createCircuit
+const createCircuitOld = () => {
+  if (canCreateCircuit.value) {
+    handleCreateCircuit()
+  }
+}
+
+// Fonction wrapper pour deleteCircuit
+const deleteCircuitOld = (index) => {
+  if (index < circuits.value.length) {
+    const circuit = circuits.value[index]
+    handleDeleteCircuit(circuit)
+  }
+}
+
+// Fonction wrapper pour editCircuit
+const editCircuitOld = (index) => {
+  if (index < circuits.value.length) {
+    const circuit = circuits.value[index]
+    handleEditCircuit(circuit)
   }
 }
 
 // Fonctions pour les commentaires
 const addComment = () => {
+  newCircuit.value.comments = newCircuit.value.comments || []
   newCircuit.value.comments.push({
     author: '',
     content: ''
@@ -719,18 +1131,8 @@ const addComment = () => {
 }
 
 const removeComment = (index) => {
-  newCircuit.value.comments.splice(index, 1)
-}
-
-const editCircuit = (index) => {
-  // TODO: Implémenter la modification
-  console.log('Modifier le circuit:', circuits.value[index])
-}
-
-const deleteCircuit = (index) => {
-  if (confirm('Êtes-vous sûr de vouloir supprimer ce circuit ?')) {
-    circuits.value.splice(index, 1)
-    console.log('Circuit supprimé')
+  if (newCircuit.value.comments) {
+    newCircuit.value.comments.splice(index, 1)
   }
 }
 
@@ -749,17 +1151,22 @@ const closeModal = () => {
 
 const saveSpotFromModal = () => {
   if (modalSpot.value.nom && modalSpot.value.region) {
-    spots.value.push({
-      nom: modalSpot.value.nom,
-      region: modalSpot.value.region,
+    // Utiliser la fonction Strapi pour créer le circuit
+    const circuitData = {
+      name: modalSpot.value.nom,
       description: modalSpot.value.description,
-      types: 'urbex',
-      images: modalSpot.value.image || 'xxx',
-      urls: modalSpot.value.url || 'xxx',
-      status: modalSpot.value.actif ? 'active' : 'inactive'
-    })
+      duration: 60,
+      address: {
+        street: '',
+        city: modalSpot.value.region,
+        zipCode: '',
+        country: 'Belgique'
+      },
+      published: modalSpot.value.actif || false
+    }
+    
+    handleCreateCircuit(circuitData)
     closeModal()
-    console.log('Spot ajouté avec succès')
   } else {
     alert('Veuillez remplir au moins le nom et la région')
   }
@@ -786,15 +1193,35 @@ const closeUrlOverlay = () => {
 }
 
 const selectImage = (imageFile) => {
-  newSpot.value.image = imageFile
+  newCircuit.value.image = imageFile
   closeImageOverlay()
+  showSuccessMessage('Image sélectionnée : ' + imageFile)
 }
 
 const saveUrl = (url) => {
   if (url) {
-    newSpot.value.url = url
+    newCircuit.value.url = url
+    showSuccessMessage('URL sauvegardée')
   }
   closeUrlOverlay()
+}
+
+// Fonctions pour le téléchargement de fichiers
+const triggerFileUpload = () => {
+  if (fileInput.value) {
+    fileInput.value.click()
+  }
+}
+
+const handleFileUpload = (event) => {
+  const file = event.target.files[0]
+  if (file) {
+    // Ici on pourrait traiter le fichier (upload vers un serveur, prévisualisation, etc.)
+    console.log('Fichier sélectionné:', file.name)
+    newCircuit.value.image = file.name
+    closeImageOverlay()
+    showSuccessMessage('Image téléchargée : ' + file.name)
+  }
 }
 
 // Fonctions pour l'overlay des commentaires
@@ -809,14 +1236,55 @@ const closeCommentsOverlay = () => {
 }
 
 const editComment = (circuit, commentIndex) => {
-  // TODO: Implémenter la modification de commentaire
-  console.log('Modifier le commentaire:', circuit.comments[commentIndex])
+  editingComment.value = { ...circuit.comments[commentIndex] }
+  editingCommentIndex.value = commentIndex
+  editingCommentCircuit.value = circuit
+  showEditCommentModal.value = true
 }
 
-const deleteComment = (circuit, commentIndex) => {
+const saveEditComment = async () => {
+  if (!editingComment.value || !editingCommentCircuit.value) return
+  
+  try {
+    // Mettre à jour le commentaire dans le circuit
+    editingCommentCircuit.value.comments[editingCommentIndex.value] = {
+      ...editingComment.value
+    }
+    
+    console.log('Commentaire modifié pour le circuit:', editingCommentCircuit.value.name)
+    
+    // Fermer la modal
+    cancelEditComment()
+    
+    // TODO: Ici on pourrait faire un appel API pour sauvegarder les changements
+    // await updateCircuit(editingCommentCircuit.value.id, editingCommentCircuit.value)
+    
+  } catch (err) {
+    console.error('Erreur lors de la modification du commentaire:', err)
+  }
+}
+
+const cancelEditComment = () => {
+  showEditCommentModal.value = false
+  editingComment.value = null
+  editingCommentIndex.value = -1
+  editingCommentCircuit.value = null
+}
+
+const deleteComment = async (circuit, commentIndex) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer ce commentaire ?')) {
-    circuit.comments.splice(commentIndex, 1)
-    console.log('Commentaire supprimé')
+    try {
+      // Supprimer le commentaire du tableau
+      circuit.comments.splice(commentIndex, 1)
+      
+      console.log('Commentaire supprimé du circuit:', circuit.name)
+      
+      // TODO: Ici on pourrait faire un appel API pour sauvegarder les changements
+      // await updateCircuit(circuit.id, circuit)
+      
+    } catch (err) {
+      console.error('Erreur lors de la suppression du commentaire:', err)
+    }
   }
 }
 </script>
@@ -837,12 +1305,17 @@ html, body {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Transition pour la rotation de l'icône */
+.rotate-180 {
+  transform: rotate(180deg);
 }
 
 /* Hover effects pour les boutons de mode */

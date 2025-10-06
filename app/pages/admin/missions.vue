@@ -14,8 +14,17 @@
       
       <div class="flex-1 flex flex-col overflow-hidden ml-8">
         
-        <!-- Stats Section -->
-        <div class="mb-12 flex-shrink-0">
+        <!-- Stats Section -->const handleDeleteMission = async (missionId) => {
+  if (confirm('\u00cates-vous s\u00fbr de vouloir supprimer cette mission ?')) {
+    const success = await deleteMission(missionId)
+    if (!success && error.value) {
+      // Afficher l'erreur pendant 5 secondes
+      setTimeout(() => {
+        error.value = null
+      }, 5000)
+    }
+  }
+}    <div class="mb-12 flex-shrink-0">
           <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-12">
             <!-- Missions totales -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
@@ -101,7 +110,7 @@
                 <!-- Threshold et Statut -->
                 <div class="space-y-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Threshold</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Threshold ( mètres )</label>
                     <input 
                       v-model="newMission.threshold"
                       type="number" 
@@ -127,18 +136,22 @@
               <div class="flex gap-3 pt-4">
                 <button
                   @click="createMission"
-                  :disabled="!canCreateMission"
-                  :class="canCreateMission ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+                  :disabled="!canCreateMission || isCreating"
+                  :class="canCreateMission && !isCreating ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
                   class="px-6 py-2 rounded-md transition-colors duration-200 flex items-center"
                 >
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg v-if="!isCreating" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                   </svg>
-                  Créer la mission
+                  <svg v-else class="animate-spin w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  {{ isCreating ? 'Création...' : 'Créer la mission' }}
                 </button>
                 <button
                   @click="clearForm"
-                  class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200"
+                  :disabled="isCreating"
+                  class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50"
                 >
                   Réinitialiser
                 </button>
@@ -149,7 +162,63 @@
 
         <!-- Missions Management Table -->
         <div class="mb-12">
-          <h2 class="text-2xl font-bold text-gray-900 pb-6" style="font-family: 'Do Hyeon', sans-serif;">Gestion des missions</h2>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900" style="font-family: 'Do Hyeon', sans-serif;">Gestion des missions</h2>
+            <div class="flex space-x-3">
+              <button
+                @click="testStrapi"
+                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors duration-200 flex items-center"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Test Strapi
+              </button>
+              <button
+                @click="refreshMissions"
+                :disabled="loading"
+                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-md transition-colors duration-200 flex items-center"
+              >
+                <svg class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                {{ loading ? 'Chargement...' : 'Actualiser' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Message d'erreur -->
+          <div v-if="error" class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <strong>Erreur de connexion :</strong>
+            </div>
+            <p class="mt-1">{{ error }}</p>
+            <div class="mt-2 text-sm">
+              <p><strong>Solutions possibles :</strong></p>
+              <ul class="list-disc list-inside mt-1 space-y-1">
+                <li>Vérifiez que Strapi est démarré : <code class="bg-red-200 px-1 rounded">npm run develop</code></li>
+                <li>Connectez-vous en tant qu'administrateur dans Strapi : <code class="bg-red-200 px-1 rounded">http://localhost:1337/admin</code></li>
+                <li>Vérifiez que votre token admin est valide (reconnectez-vous si nécessaire)</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Message si aucune mission -->
+          <div v-if="!loading && !error && missions.length === 0" class="mb-4 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div class="text-center">
+              <svg class="w-12 h-12 mx-auto text-yellow-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 18.5c-.77.833.192 2.5 1.732 2.5z"/>
+              </svg>
+              <h3 class="text-lg font-medium text-yellow-800 mb-1">Aucune mission trouvée</h3>
+              <p class="text-yellow-700">
+                Aucune mission n'est enregistrée dans votre base de données Strapi.
+                <br>Créez des missions dans l'interface d'administration de Strapi.
+              </p>
+            </div>
+          </div>
           
           <div class="bg-white rounded-lg border border-gray-200">
             <!-- Table Header -->
@@ -167,21 +236,43 @@
 
             <!-- Table Body -->
             <div class="max-h-96 overflow-y-auto">
+              <!-- Loading skeleton -->
+              <div v-if="loading" class="px-6 py-6">
+                <div class="animate-pulse space-y-4">
+                  <div v-for="n in 3" :key="n" class="grid grid-cols-7 gap-6">
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                    <div class="h-4 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Missions list -->
               <div 
-                v-for="(mission, index) in missions" 
-                :key="index"
+                v-else
+                v-for="mission in missions" 
+                :key="mission.id"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
                 <div class="grid grid-cols-7 gap-6 items-center text-base">
-                  <div class="text-gray-900">{{ mission.title }}</div>
-                  <div class="text-gray-600">{{ mission.description }}</div>
-                  <div class="text-gray-600">{{ mission.latitude || 'N/A' }}</div>
-                  <div class="text-gray-600">{{ mission.longitude || 'N/A' }}</div>
-                  <div class="text-gray-600">{{ mission.threshold || 'N/A' }}</div>
-                  <div class="text-gray-600">{{ mission.published ? 'Publié' : 'Brouillon' }}</div>
+                  <div class="text-gray-900 font-medium">{{ mission.title || 'N/A' }}</div>
+                  <div class="text-gray-600 truncate" :title="mission.description">{{ mission.description || 'N/A' }}</div>
+                  <div class="text-gray-600 font-mono text-sm">{{ mission.latitude || 'N/A' }}</div>
+                  <div class="text-gray-600 font-mono text-sm">{{ mission.longitude || 'N/A' }}</div>
+                  <div class="text-gray-900 font-bold">{{ mission.threshold || 'N/A' }}</div>
+                  <div class="flex items-center">
+                    <span :class="mission.published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'" 
+                          class="px-2 py-1 rounded-full text-xs font-medium">
+                      {{ mission.published ? 'Publié' : 'Brouillon' }}
+                    </span>
+                  </div>
                   <div class="flex items-center space-x-3">
                     <button
-                      @click="editMission(index)"
+                      @click="editMission(mission)"
                       class="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-2"
                       title="Modifier"
                     >
@@ -190,7 +281,7 @@
                       </svg>
                     </button>
                     <button
-                      @click="deleteMission(index)"
+                      @click="handleDeleteMission(mission.id)"
                       class="text-red-600 hover:text-red-800 transition-colors duration-200 p-2"
                       title="Supprimer"
                     >
@@ -208,6 +299,120 @@
       </div>
     </div>
   </main>
+  
+  <!-- Modal d'édition de mission -->
+  <div v-if="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold text-gray-900">Modifier la mission</h3>
+        <button @click="cancelEdit" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Formulaire d'édition -->
+      <div v-if="editingMission" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Titre -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Titre <span class="text-red-500">*</span></label>
+            <input 
+              v-model="editingMission.title"
+              type="text" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Nom de la mission"
+              required
+            />
+          </div>
+          
+          <!-- Latitude -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+            <input 
+              v-model="editingMission.latitude"
+              type="number" 
+              step="any"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="ex: 50.8503"
+            />
+          </div>
+          
+          <!-- Longitude -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+            <input 
+              v-model="editingMission.longitude"
+              type="number" 
+              step="any"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="ex: 4.3517"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Description -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea 
+              v-model="editingMission.description"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Description de la mission"
+              rows="3"
+            ></textarea>
+          </div>
+          
+          <!-- Threshold et Statut -->
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Threshold (mètres)</label>
+              <input 
+                v-model="editingMission.threshold"
+                type="number" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                placeholder="Seuil requis"
+              />
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+              <select 
+                v-model="editingMission.published"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option :value="false">Brouillon</option>
+                <option :value="true">Publié</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <button
+            @click="cancelEdit"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200"
+          >
+            Annuler
+          </button>
+          <button
+            @click="saveEditMission"
+            :disabled="!editingMission.title || !editingMission.title.length"
+            :class="editingMission.title && editingMission.title.length ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+            class="px-6 py-2 rounded-md transition-colors duration-200 flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Sauvegarder
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -238,6 +443,24 @@ useHead({
   ]
 })
 
+// Utilisation du composable pour la gestion des missions
+const { 
+  missions, 
+  loading, 
+  error, 
+  totalMissions,
+  publishedMissions,
+  draftMissions,
+  fetchMissions, 
+  createMission: createMissionApi,
+  updateMission,
+  deleteMission,
+  testConnection
+} = await useMissions()
+
+// Chargement initial des missions
+await fetchMissions()
+
 // États réactifs pour le formulaire d'ajout
 const newMission = ref({
   title: '',
@@ -248,54 +471,11 @@ const newMission = ref({
   published: false
 })
 
-// Données mock des missions selon le vrai schéma
-const missions = ref([
-  {
-    title: 'Mission Charleroi Centre',
-    description: 'Explorer le centre historique de Charleroi',
-    latitude: 50.4108,
-    longitude: 4.4446,
-    threshold: 100,
-    published: true
-  },
-  {
-    title: 'Mission Friche Industrielle',
-    description: 'Découvrir les friches industrielles',
-    latitude: 50.4500,
-    longitude: 4.5000,
-    threshold: 150,
-    published: true
-  },
-  {
-    title: 'Mission Liège Urbex',
-    description: 'Exploration urbaine à Liège',
-    latitude: 50.6326,
-    longitude: 5.5797,
-    threshold: 200,
-    published: false
-  },
-  {
-    title: 'Mission Dinant Castle',
-    description: 'Explorer les environs du château de Dinant',
-    latitude: 50.2607,
-    longitude: 4.9123,
-    threshold: 75,
-    published: true
-  },
-  {
-    title: 'Mission Namur Historic',
-    description: 'Centre historique de Namur',
-    latitude: 50.4674,
-    longitude: 4.8720,
-    threshold: 120,
-    published: false
-  }
-])
+const isCreating = ref(false)
 
-// Computed properties
-const totalMissions = computed(() => missions.value.length)
-const publishedMissions = computed(() => missions.value.filter(m => m.published).length)
-const draftMissions = computed(() => missions.value.filter(m => !m.published).length)
+// États pour la modal d'édition
+const showEditModal = ref(false)
+const editingMission = ref(null)
 
 // Validation pour la création
 const canCreateMission = computed(() => {
@@ -314,10 +494,14 @@ const clearForm = () => {
   }
 }
 
-const createMission = () => {
-  if (canCreateMission.value) {
-    // Ajouter la nouvelle mission à la liste
-    const newMissionData = {
+const createMission = async () => {
+  if (!canCreateMission.value) return
+  
+  isCreating.value = true
+  
+  try {
+    // Préparer les données pour Strapi
+    const missionData = {
       title: newMission.value.title,
       description: newMission.value.description || '',
       latitude: newMission.value.latitude,
@@ -326,27 +510,82 @@ const createMission = () => {
       published: newMission.value.published
     }
     
-    missions.value.push(newMissionData)
+    // Créer la mission via l'API Strapi
+    await createMissionApi(missionData)
     
     // Afficher une notification de succès
-    console.log('Mission créée avec succès:', newMissionData)
+    console.log('Mission créée avec succès dans Strapi')
     
     // Réinitialiser le formulaire
     clearForm()
+    
+  } catch (err) {
+    console.error('Erreur lors de la création de la mission:', err)
+    // L'erreur est déjà gérée par le composable
+  } finally {
+    isCreating.value = false
   }
 }
 
-// Fonctions simplifiées pour les missions (comme dans utilisateurs.vue)
-const editMission = (index) => {
-  // TODO: Implémenter la modification
-  console.log('Modifier la mission:', missions.value[index])
+// Fonctions pour les actions sur les missions
+const editMission = (mission) => {
+  editingMission.value = { 
+    ...mission,
+    published: mission.publishedAt != null  // Convertir publishedAt en boolean pour l'interface
+  }
+  showEditModal.value = true
 }
 
-const deleteMission = (index) => {
+const saveEditMission = async () => {
+  if (!editingMission.value) return
+  
+  try {
+    // Préparer les données pour Strapi
+    const missionData = {
+      title: editingMission.value.title,
+      description: editingMission.value.description || '',
+      latitude: editingMission.value.latitude,
+      longitude: editingMission.value.longitude,
+      threshold: editingMission.value.threshold,
+      publishedAt: editingMission.value.published ? new Date().toISOString() : null
+    }
+    
+    // Mise à jour de la mission via l'API (utiliser documentId)
+    await updateMission(editingMission.value.documentId || editingMission.value.id, missionData)
+    
+    console.log('Mission mise à jour avec succès:', missionData)
+    
+    // Fermer la modal
+    showEditModal.value = false
+    editingMission.value = null
+    
+    // Rafraîchir la liste
+    await fetchMissions()
+    
+  } catch (err) {
+    console.error('Erreur lors de la mise à jour de la mission:', err)
+    // Afficher un message d'erreur à l'utilisateur
+    alert('Erreur lors de la mise à jour de la mission. Vérifiez vos permissions et réessayez.')
+  }
+}
+
+const cancelEdit = () => {
+  showEditModal.value = false
+  editingMission.value = null
+}
+
+const handleDeleteMission = async (missionId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette mission ?')) {
-    missions.value.splice(index, 1)
-    console.log('Mission supprimée')
+    await deleteMission(missionId)
   }
+}
+
+const refreshMissions = async () => {
+  await fetchMissions()
+}
+
+const testStrapi = async () => {
+  await testConnection()
 }
 </script>
 
