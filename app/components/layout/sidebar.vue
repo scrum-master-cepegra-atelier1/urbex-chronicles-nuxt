@@ -95,18 +95,17 @@ const navigationItems = [
     name: 'Succès',
     href: '/admin/success',
     icon: '🏆' // Icône temporaire - sera remplacée
+  },
+  {
+    name: 'Notifications',
+    href: '/admin/notifications',
+    icon: '🔔'
+  },
+  {
+    name: 'Tickets',
+    href: '/admin/tickets',
+    icon: '🎫'
   }
-  // TODO: Ajouter Notifications et Tickets quand les pages seront créées
-  // {
-  //   name: 'Notifications',
-  //   href: '/admin/notifications',
-  //   icon: '🔔'
-  // },
-  // {
-  //   name: 'Tickets',
-  //   href: '/admin/tickets',
-  //   icon: '🎫'
-  // }
 ]
 
 // Fonction pour vérifier si une route est active
