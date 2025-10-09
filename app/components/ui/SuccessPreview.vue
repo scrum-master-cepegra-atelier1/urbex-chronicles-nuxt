@@ -20,6 +20,246 @@
 
           <div class="flex items-center justify-between">
 
+            <div class="flex items-center space-x-4">
+
+              <div class="text-4xl">🏆</div>      <!-- Modal -->      <!-- Modal -->
+
+              <div>
+
+                <h3 class="text-xl font-bold text-white">      <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">      <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+
+                  {{ successData.title || 'Prévisualisation du succès' }}
+
+                </h3>        <!-- Header -->        <!-- Header -->
+
+                <p class="text-purple-100">
+
+                  {{ successData.experience || 0 }} points d'expérience        <div class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 sm:px-8 sm:py-6">        <div class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 sm:px-8 sm:py-6">
+
+                </p>
+
+              </div>          <div class="flex items-center justify-between">          <div class="flex items-center justify-between">
+
+            </div>
+
+            <button @click="closePreview" class="text-white hover:text-purple-200 transition-colors">            <div class="flex items-center space-x-4">            <div class="flex items-center space-x-4">
+
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>              <div class="text-4xl">🏆</div>              <div class="text-4xl">🏆</div>
+
+              </svg>
+
+            </button>              <div>              <div>
+
+          </div>
+
+        </div>                <h3 class="text-xl font-bold text-white">                <h3 class="text-xl font-bold text-white">
+
+
+
+        <!-- Content -->                  {{ successData.title || 'Prévisualisation du succès' }}                  {{ successData.title || 'Prévisualisation du succès' }}
+
+        <div class="p-6 sm:p-8">
+
+          <div class="text-center">                </h3>                </h3>
+
+            <div class="text-6xl mb-4">🏆</div>
+
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">                <p class="text-purple-100">                <p class="text-purple-100">
+
+              {{ successData.title || 'Nouveau Succès' }}
+
+            </h2>                  {{ successData.experience || 0 }} points d'expérience                  {{ successData.experience || 0 }} points d'expérience
+
+            <p class="text-gray-600 mb-6">
+
+              {{ successData.description || 'Description du succès' }}                </p>                </p>
+
+            </p>
+
+            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full inline-block font-semibold">              </div>              </div>
+
+              + {{ successData.experience || 0 }} XP
+
+            </div>            </div>            </div>
+
+          </div>
+
+        </div>            <button @click="closePreview" class="text-white hover:text-purple-200 transition-colors">            <button @click="closePreview" class="text-white hover:text-purple-200 transition-colors">
+
+
+
+        <!-- Footer -->              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+        <div class="bg-gray-50 px-6 py-4 sm:px-8 flex justify-end space-x-3">
+
+          <button                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+
+            @click="closePreview"
+
+            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"              </svg>              </svg>
+
+          >
+
+            Fermer            </button>            </button>
+
+          </button>
+
+        </div>          </div>          </div>
+
+      </div>
+
+    </div>        </div>        </div>
+
+  </div>
+
+</template>
+
+
+
+<script setup>        <!-- Content -->        <!-- Content -->
+
+// Props
+
+const props = defineProps({        <div class="p-6 sm:p-8">        <div class="p-6 sm:p-8">
+
+  show: {
+
+    type: Boolean,          <div class="text-center">          <div class="text-center">
+
+    default: false
+
+  },            <div class="text-6xl mb-4">🏆</div>            <div class="text-6xl mb-4">🏆</div>
+
+  successData: {
+
+    type: Object,            <h2 class="text-2xl font-bold text-gray-900 mb-2">            <h2 class="text-2xl font-bold text-gray-900 mb-2">
+
+    default: () => ({})
+
+  }              {{ successData.title || 'Nouveau Succès' }}              {{ successData.title || 'Nouveau Succès' }}
+
+})
+
+            </h2>            </h2>
+
+// Emits
+
+const emit = defineEmits(['close'])            <p class="text-gray-600 mb-6">            <p class="text-gray-600 mb-6">
+
+
+
+// Methods              {{ successData.description || 'Description du succès' }}              {{ successData.description || 'Description du succès' }}
+
+const closePreview = () => {
+
+  emit('close')            </p>            </p>
+
+}
+
+</script>            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full inline-block font-semibold">            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full inline-block font-semibold">
+
+              + {{ successData.experience || 0 }} XP              + {{ successData.experience || 0 }} XP
+
+            </div>            </div>
+
+          </div>          </div>
+
+        </div>        </div>
+
+
+
+        <!-- Footer -->        <!-- Footer -->
+
+        <div class="bg-gray-50 px-6 py-4 sm:px-8 flex justify-end space-x-3">        <div class="bg-gray-50 px-6 py-4 sm:px-8 flex justify-end space-x-3">
+
+          <button           <button 
+
+            @click="closePreview"            @click="closePreview"
+
+            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+
+          >          >
+
+            Fermer            Fermer
+
+          </button>          </button>
+
+        </div>        </div>
+
+      </div>      </div>
+
+    </div>    </div>
+
+  </div>  </div>
+
+</template></template>
+
+
+
+<script setup><script setup>
+
+// Props// Props
+
+const props = defineProps({const props = defineProps({
+
+  show: {  show: {
+
+    type: Boolean,    type: Boolean,
+
+    default: false    default: false
+
+  },  },
+
+  successData: {  successData: {
+
+    type: Object,    type: Object,
+
+    default: () => ({})    default: () => ({})
+
+  }  }
+
+})})
+
+
+
+// Emits// Emits
+
+const emit = defineEmits(['close'])const emit = defineEmits(['close'])
+
+
+
+// Methods// Methods
+
+const closePreview = () => {const closePreview = () => {
+
+  emit('close')  emit('close')
+
+}}
+
+</script></script>
+
+  <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
+
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">  <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">  <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
+
+      <!-- Overlay -->
+
+      <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closePreview"></div>    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+
+
+
+      <!-- Modal -->      <!-- Overlay -->      <!-- Overlay -->
+
+      <div class="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+
+        <!-- Header -->      <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closePreview"></div>      <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closePreview"></div>
+
+        <div class="bg-gradient-to-r from-purple-500 to-indigo-600 px-6 py-4 sm:px-8 sm:py-6">
+
+          <div class="flex items-center justify-between">
+
             <div class="flex items-center space-x-3">
 
               <div class="text-3xl">🔍</div>      <!-- Modal -->      <!-- Modal -->

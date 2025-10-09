@@ -13,34 +13,28 @@ export const useAchievements = () => {
 
   // Fonctions utilitaires pour mapper les données selon le schéma Strapi exact
   const mapFromStrapi = (achievement) => {
-    console.log(`🔍 Mapping achievement ${achievement.id}:`, {
-      id: achievement.id,
-      documentId: achievement.documentId,
-      name: achievement.name,
-      publishedAt: achievement.publishedAt,
-      publishedStatus: achievement.publishedAt ? 'PUBLISHED' : 'DRAFT',
-      allFields: Object.keys(achievement)
-    })
+    const isPublished = achievement.status === 'published'
     
     return {
       id: achievement.id,
       documentId: achievement.documentId,
       // Champs du schéma Strapi exact
       name: achievement.name || 'Sans titre',
-      experience: achievement.experience || 0,
+      experience: parseInt(achievement.experience) || 0,
       // Champs UI dérivés pour compatibilité avec l'interface
       title: achievement.name || 'Sans titre', // UI compatibility
-      xpReward: achievement.experience || 0, // UI compatibility
+      xpReward: parseInt(achievement.experience) || 0, // UI compatibility
       description: `Succès: ${achievement.name}`, // Description générée
       icon: '🏆', // Icône par défaut
       type: 'achievement', // Type par défaut
       rarity: 'common', // Rareté par défaut
-      active: achievement.publishedAt ? true : false, // Basé sur draftAndPublish
+      active: isPublished, // Basé sur le champ status au lieu de publishedAt
       conditions: `Obtenir ${achievement.experience} points d'expérience`, // Conditions générées
       unlocks: 0, // Simulation
       createdAt: achievement.createdAt,
       updatedAt: achievement.updatedAt,
-      publishedAt: achievement.publishedAt
+      publishedAt: achievement.publishedAt,
+      status: achievement.status // Ajout du champ status
     }
   }
 
@@ -59,12 +53,22 @@ export const useAchievements = () => {
     const totalXP = achievements.value
       .filter(a => a.active) // Seulement les succès publiés/débloqués
       .reduce((sum, a) => sum + (a.experience || a.xpReward || 0), 0)
+    
+    // Calcul du total d'XP distribué (XP * nombre de débloquages)
+    const totalXPDistributed = achievements.value
+      .filter(a => a.active) // Seulement les succès publiés/débloqués
+      .reduce((sum, a) => {
+        const xp = a.experience || a.xpReward || 0
+        const unlocks = a.unlocks || 0
+        return sum + (xp * unlocks)
+      }, 0)
 
     return {
       total,
       active,
       todayUnlocked,
-      totalXP
+      totalXP,
+      totalXPDistributed
     }
   })
 
@@ -81,13 +85,9 @@ export const useAchievements = () => {
       const response = await strapiAdminApi.get('/content-manager/collection-types/api::achievement.achievement?page=1&pageSize=100')
       
       if (response && response.results) {
-        console.log('🔍 Structure de la réponse Strapi:', response)
-        console.log('🔍 Premier achievement:', response.results[0])
-        console.log('🔍 Champs disponibles dans le premier achievement:', Object.keys(response.results[0] || {}))
+        console.log(`✅ ${response.results.length} achievements récupérés avec succès`)
         
         achievements.value = response.results.map(mapFromStrapi)
-        console.log(`✅ ${achievements.value.length} achievements récupérés avec succès`)
-        console.log('🔍 Premier achievement mappé:', achievements.value[0])
       } else {
         console.warn('⚠️ Structure de réponse inattendue:', response)
         achievements.value = []
@@ -140,6 +140,7 @@ export const useAchievements = () => {
         // Ajouter le nouvel achievement à la liste en utilisant les données de réponse
         const newAchievement = mapFromStrapi({
           ...response,
+          status: 'draft', // Par défaut, les nouveaux achievements sont en draft
           unlocks: 0
         })
         achievements.value.unshift(newAchievement)
@@ -176,6 +177,7 @@ export const useAchievements = () => {
         if (index !== -1) {
           achievements.value[index] = mapFromStrapi({
             ...response,
+            status: response.status || 'draft', // Inclure le status dans la mise à jour
             unlocks: achievements.value[index].unlocks // Conserver les unlocks existants
           })
         }
@@ -236,6 +238,7 @@ export const useAchievements = () => {
       const index = achievements.value.findIndex(a => a.documentId === documentId)
       if (index !== -1) {
         achievements.value[index].active = shouldPublish
+        achievements.value[index].status = shouldPublish ? 'published' : 'draft'
         achievements.value[index].publishedAt = shouldPublish ? new Date().toISOString() : null
       }
       

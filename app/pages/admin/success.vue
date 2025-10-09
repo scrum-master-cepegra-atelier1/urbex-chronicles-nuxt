@@ -9,7 +9,7 @@
     <div class="p-4 sm:p-6 lg:p-8">
       <!-- Page Title -->
       <div class="mb-12 flex-shrink-0">
-        <h1 class="text-gray-900" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Gestion des succès</h1>
+        <h1 class="text-gray-900" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Succes</h1>
         
         <!-- Indicateur de chargement -->
         <div v-if="loading" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -47,29 +47,35 @@
         
         <!-- Stats Section dynamiques -->
         <div class="mb-12 flex-shrink-0">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-12">
+          <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-12">
             <!-- Total succès -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
               <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ totalSuccesses }}</div>
               <div class="text-base lg:text-lg text-gray-600">Total Succès</div>
             </div>
 
-            <!-- Succès actifs -->
+            <!-- Succès actifs (publiés) -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
               <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ activeSuccesses }}</div>
-              <div class="text-base lg:text-lg text-gray-600">Actifs</div>
+              <div class="text-base lg:text-lg text-gray-600">Publiés</div>
             </div>
 
-            <!-- Succès débloqués aujourd'hui -->
+            <!-- Succès en brouillon -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ todayUnlocked }}</div>
-              <div class="text-base lg:text-lg text-gray-600">Débloqués aujourd'hui</div>
+              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ totalSuccesses - activeSuccesses }}</div>
+              <div class="text-base lg:text-lg text-gray-600">Brouillons</div>
+            </div>
+
+            <!-- XP Total disponible -->
+            <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ formatNumber(totalXP) }}</div>
+              <div class="text-base lg:text-lg text-gray-600">XP Disponibles</div>
             </div>
 
             <!-- XP Total distribué -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ formatNumber(totalXP) }}</div>
-              <div class="text-base lg:text-lg text-gray-600">XP Débloqués</div>
+              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ formatNumber(totalXPDistributed) }}</div>
+              <div class="text-base lg:text-lg text-gray-600">XP Total distribué</div>
             </div>
           </div>
         </div>
@@ -343,15 +349,16 @@
             </div>
           </div>
           
-          <div class="bg-white rounded-lg border border-gray-200">
-            <!-- Table Header - Simplifié selon le schéma Strapi -->
+          <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <!-- Table Header - Amélioré avec plus d'informations -->
             <div class="bg-gray-50 px-6 py-6 border-b border-gray-200">
-              <div class="grid grid-cols-5 gap-6 text-base font-medium text-gray-700">
-                <div>Nom</div>
-                <div>Expérience</div>
-                <div>Statut</div>
-                <div>Débloquages</div>
-                <div>Actions</div>
+              <div class="grid grid-cols-12 gap-4 text-sm font-medium text-gray-700">
+                <div class="col-span-4">Nom</div>
+                <div class="col-span-2">Expérience</div>
+                <div class="col-span-2">Statut</div>
+                <div class="col-span-1">Débloquages</div>
+                <div class="col-span-2">Modifié</div>
+                <div class="col-span-1">Actions</div>
               </div>
             </div>
 
@@ -376,39 +383,50 @@
                 :key="success.id || index"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
-                <div class="grid grid-cols-5 gap-6 items-center text-base">
+                <div class="grid grid-cols-12 gap-4 items-center text-sm">
                   <!-- Nom du succès -->
-                  <div class="flex items-center space-x-3">
-                    <div class="text-2xl">🏆</div>
-                    <div>
-                      <div class="text-gray-900 font-medium">{{ success.name || 'N/A' }}</div>
-                      <div class="text-xs text-gray-500">ID: {{ success.documentId || success.id }}</div>
+                  <div class="col-span-4 flex items-center space-x-3 min-w-0">
+                    <div class="text-2xl flex-shrink-0">🏆</div>
+                    <div class="min-w-0 flex-1">
+                      <div class="text-gray-900 font-medium truncate">{{ success.name || 'N/A' }}</div>
+                      <div class="text-xs text-gray-500 truncate">ID: {{ success.documentId || success.id }}</div>
                     </div>
                   </div>
                   
                   <!-- Expérience -->
-                  <div class="text-gray-600 font-mono text-lg">
-                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">
-                      {{ success.experience || 0 }} XP
+                  <div class="col-span-2 text-gray-600 font-mono text-sm">
+                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold text-xs whitespace-nowrap">
+                      {{ formatNumber(success.experience || 0) }} XP
                     </span>
                   </div>
                   
-                  <!-- Statut (publié/brouillon) -->
-                  <div class="text-gray-600">
-                    <span :class="success.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'" class="px-2 py-1 rounded-full text-xs">
-                      {{ success.active ? 'Publié' : 'Brouillon' }}
+                  <!-- Statut (interactif) -->
+                  <div class="col-span-2 text-gray-600">
+                    <button
+                      @click="toggleSuccessStatus(success)"
+                      :class="success.active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'"
+                      class="px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 flex items-center space-x-1 w-full justify-center"
+                      :title="success.active ? 'Cliquer pour mettre en brouillon' : 'Cliquer pour publier'"
+                    >
+                      <span>{{ success.active ? '✓ Publié' : '⏳ Brouillon' }}</span>
+                    </button>
+                  </div>
+                  
+                                    <!-- Débloquages (simulation) -->
+                  <div class="col-span-1 text-gray-600 text-center">
+                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap">
+                      {{ success.unlocks || 0 }}
                     </span>
                   </div>
                   
-                  <!-- Débloquages (simulation) -->
-                  <div class="text-gray-600">
-                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                      {{ success.unlocks || 0 }} fois
-                    </span>
+                  <!-- Date de modification -->
+                  <div class="col-span-2 text-gray-500 text-sm min-w-0">
+                    <div class="truncate font-medium">{{ formatDate(success.updatedAt) }}</div>
+                    <div class="text-xs text-gray-400 truncate">{{ formatTimeAgo(success.updatedAt) }}</div>
                   </div>
                   
                   <!-- Actions -->
-                  <div class="flex space-x-2">
+                  <div class="col-span-1 flex space-x-1 justify-center">
                     <button
                       @click="editSuccess(success)"
                       class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
@@ -575,6 +593,7 @@ const totalSuccesses = computed(() => stats.value.total)
 const activeSuccesses = computed(() => stats.value.active)
 const todayUnlocked = computed(() => stats.value.todayUnlocked)
 const totalXP = computed(() => stats.value.totalXP)
+const totalXPDistributed = computed(() => stats.value.totalXPDistributed)
 
 // Computed property pour les achievements filtrés
 const filteredAchievements = computed(() => {
@@ -753,6 +772,47 @@ const resetFilters = () => {
 const formatNumber = (num) => {
   if (num === 0 || num === null || num === undefined) return '0'
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+}
+
+// Fonctions pour formater les dates
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  } catch (error) {
+    return 'Date invalide'
+  }
+}
+
+const formatTimeAgo = (dateString) => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60))
+    
+    if (diffInMinutes < 1) return 'À l\'instant'
+    if (diffInMinutes < 60) return `Il y a ${diffInMinutes}min`
+    
+    const diffInHours = Math.floor(diffInMinutes / 60)
+    if (diffInHours < 24) return `Il y a ${diffInHours}h`
+    
+    const diffInDays = Math.floor(diffInHours / 24)
+    if (diffInDays < 30) return `Il y a ${diffInDays}j`
+    
+    const diffInMonths = Math.floor(diffInDays / 30)
+    if (diffInMonths < 12) return `Il y a ${diffInMonths}mois`
+    
+    const diffInYears = Math.floor(diffInMonths / 12)
+    return `Il y a ${diffInYears}an${diffInYears > 1 ? 's' : ''}`
+  } catch (error) {
+    return ''
+  }
 }
 
 const refreshData = async () => {
