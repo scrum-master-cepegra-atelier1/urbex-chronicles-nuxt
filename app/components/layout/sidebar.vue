@@ -92,34 +92,32 @@ const navigationItems = [
     icon: '🎯' // Icône temporaire - sera remplacée
   },
   {
-    name: 'Success',
+    name: 'Succès',
     href: '/admin/success',
     icon: '🏆' // Icône temporaire - sera remplacée
-  },
-  {
-    name: 'Notifications',
-    href: '/admin/notifications',
-    icon: '🔔' // Icône temporaire - sera remplacée
-  },
-  {
-    name: 'Tickets',
-    href: '/admin/tickets',
-    icon: '🎫' // Icône temporaire - sera remplacée
   }
+  // TODO: Ajouter Notifications et Tickets quand les pages seront créées
+  // {
+  //   name: 'Notifications',
+  //   href: '/admin/notifications',
+  //   icon: '🔔'
+  // },
+  // {
+  //   name: 'Tickets',
+  //   href: '/admin/tickets',
+  //   icon: '🎫'
+  // }
 ]
 
 // Fonction pour vérifier si une route est active
 const isActiveRoute = (href) => {
-  let isActive
   if (href === '/') {
     // Pour la route racine, vérifier exactement la correspondance
-    isActive = route.path === '/'
+    return route.path === '/'
   } else {
     // Pour les autres routes, utiliser la logique existante
-    isActive = route.path === href || route.path.startsWith(href + '/')
+    return route.path === href || route.path.startsWith(href + '/')
   }
-  console.log(`Route actuelle: ${route.path}, href: ${href}, active: ${isActive}`)
-  return isActive
 }
 
 // Fonction pour changer la langue

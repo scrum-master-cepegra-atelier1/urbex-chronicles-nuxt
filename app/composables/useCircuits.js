@@ -11,8 +11,7 @@ export const useCircuits = () => {
   const error = ref(null)
 
   // Configuration runtime
-  const config = useRuntimeConfig()
-  const strapiBaseUrl = config.public.strapi?.url || 'http://localhost:1337/api'
+  const strapiBaseUrl = 'http://localhost:1337/api'
 
   // Computed properties pour les statistiques
   const totalCircuits = computed(() => circuits.value.length)
@@ -107,13 +106,36 @@ export const useCircuits = () => {
     try {
       const { strapiAdminApi } = await import('../service/ApiService.js')
       
-      const response = await strapiAdminApi.post('/content-manager/collection-types/api::circuit.circuit', circuitData)
+      console.log('🔄 Création d\'un nouveau circuit avec:', circuitData)
+      
+      // Valider les données selon le schéma Strapi réel
+      const validCircuitData = {
+        name: circuitData.name,
+        description: circuitData.description || '',
+        duration: circuitData.duration ? parseInt(circuitData.duration) : null,
+        like: circuitData.like ? parseInt(circuitData.like) : 0,
+        address: circuitData.address || null,
+        Missions: circuitData.Missions || [],
+        comments: circuitData.comments || []
+      }
+      
+      // Supprimer les champs null/undefined
+      Object.keys(validCircuitData).forEach(key => {
+        if (validCircuitData[key] === null || validCircuitData[key] === undefined) {
+          delete validCircuitData[key]
+        }
+      })
+      
+      console.log('📋 Données validées pour création:', validCircuitData)
+      
+      const response = await strapiAdminApi.post('/content-manager/collection-types/api::circuit.circuit', validCircuitData)
       
       // Ajouter à la liste locale
       const newCircuit = response.data || response
       circuits.value.unshift(newCircuit) // Ajouter au début de la liste
       
-      console.log('✅ Nouveau circuit créé avec succès')
+      console.log('✅ Nouveau circuit créé avec succès:', newCircuit)
+      error.value = null
       return newCircuit
       
     } catch (err) {
@@ -130,15 +152,51 @@ export const useCircuits = () => {
     try {
       const { strapiAdminApi } = await import('../service/ApiService.js')
       
-      const response = await strapiAdminApi.put(`/content-manager/collection-types/api::circuit.circuit/${circuitId}`, circuitData)
+      console.log(`🔄 Mise à jour circuit ${circuitId} avec:`, circuitData)
       
-      // Mettre à jour dans la liste locale
-      const index = circuits.value.findIndex(circuit => circuit.id === circuitId)
-      if (index !== -1) {
-        circuits.value[index] = response.data || response
+      // Valider les champs selon le schéma Strapi réel
+      const validCircuitData = {
+        name: circuitData.name,
+        description: circuitData.description,
+        duration: circuitData.duration ? parseInt(circuitData.duration) : null,
+        like: circuitData.like ? parseInt(circuitData.like) : null,
+        address: circuitData.address || null,
+        Missions: circuitData.Missions || null,
+        comments: circuitData.comments || null
       }
       
-      console.log(`✅ Circuit ${circuitId} mis à jour avec succès`)
+      // Supprimer les champs null/undefined
+      Object.keys(validCircuitData).forEach(key => {
+        if (validCircuitData[key] === null || validCircuitData[key] === undefined) {
+          delete validCircuitData[key]
+        }
+      })
+      
+      console.log('📋 Données validées pour Strapi:', validCircuitData)
+      
+      // Utiliser le documentId pour Strapi v5
+      const response = await strapiAdminApi.put(`/content-manager/collection-types/api::circuit.circuit/${circuitId}`, validCircuitData)
+      
+      console.log('✅ Réponse de mise à jour:', response)
+      
+      // Mettre à jour dans la liste locale
+      const index = circuits.value.findIndex(circuit => 
+        circuit.documentId === circuitId || circuit.id === circuitId
+      )
+      if (index !== -1) {
+        // Fusionner les nouvelles données avec les anciennes
+        circuits.value[index] = {
+          ...circuits.value[index],
+          ...(response.data || response),
+          // S'assurer que les champs modifiés sont bien mis à jour
+          ...validCircuitData
+        }
+        console.log(`✅ Circuit ${circuitId} mis à jour localement:`, circuits.value[index])
+      } else {
+        console.warn(`⚠️ Circuit ${circuitId} non trouvé dans la liste locale`)
+      }
+      
+      error.value = null
       return response.data || response
       
     } catch (err) {
@@ -155,30 +213,31 @@ export const useCircuits = () => {
     try {
       const { strapiAdminApi } = await import('../service/ApiService.js')
       
-      await strapiAdminApi.delete(`/content-manager/collection-types/api::circuit.circuit/${circuitId}`)
+      console.log(`🗑️ Suppression circuit ${circuitId}`)
       
-      // Mettre à jour la liste locale
-      circuits.value = circuits.value.filter(circuit => circuit.id !== circuitId)
+      // Utiliser le documentId pour Strapi v5
+      const response = await strapiAdminApi.delete(`/content-manager/collection-types/api::circuit.circuit/${circuitId}`)
       
-      console.log(`\u2705 Circuit ${circuitId} supprimé avec succès`)
-      error.value = null
-      return true
+      console.log('✅ Réponse de suppression:', response)
       
-    } catch (err) {
-      console.error(`\u274c Erreur lors de la suppression du circuit ${circuitId}:`, err)
-      
-      // Gestion détaillée des erreurs
-      if (err.response?.status === 401) {
-        error.value = "Erreur d'authentification : Veuillez vous reconnecter \u00e0 l'admin Strapi"
-      } else if (err.response?.status === 404) {
-        error.value = `Circuit ${circuitId} non trouvé ou déjà supprimé`
-      } else if (err.response?.status === 403) {
-        error.value = "Accès refusé : Permissions insuffisantes pour supprimer ce circuit"
+      // Supprimer de la liste locale en utilisant documentId ou id
+      const index = circuits.value.findIndex(circuit => 
+        circuit.documentId === circuitId || circuit.id === circuitId
+      )
+      if (index !== -1) {
+        const deletedCircuit = circuits.value.splice(index, 1)[0]
+        console.log(`✅ Circuit supprimé localement:`, deletedCircuit)
       } else {
-        error.value = `Impossible de supprimer le circuit: ${err.message}`
+        console.warn(`⚠️ Circuit ${circuitId} non trouvé dans la liste locale pour suppression`)
       }
       
-      return false
+      error.value = null
+      return response.data || response
+      
+    } catch (err) {
+      console.error(`❌ Erreur lors de la suppression du circuit ${circuitId}:`, err)
+      error.value = `Impossible de supprimer le circuit: ${err.message}`
+      throw err
     }
   }
 
@@ -239,7 +298,16 @@ export const useCircuits = () => {
     }
   }
 
-  // Méthodes utilitaires pour l'affichage
+  // Méthodes utilitaires pour l'affichage selon le schéma Circuit
+  const getCircuitStatus = (circuit) => {
+    if (circuit.published) return 'Publié'
+    return 'Brouillon'
+  }
+
+  const getCircuitDuration = (circuit) => {
+    return circuit.duration ? parseInt(circuit.duration) : 0
+  }
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
     try {
@@ -300,7 +368,9 @@ export const useCircuits = () => {
     // Utilitaires
     formatDate,
     formatDuration,
-    getCircuitAddress
+    getCircuitAddress,
+    getCircuitStatus,
+    getCircuitDuration
   }
 }
 

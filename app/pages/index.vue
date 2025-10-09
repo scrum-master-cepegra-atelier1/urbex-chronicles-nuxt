@@ -105,7 +105,7 @@
                 </div>
 
                 <!-- Utilisateurs - Navigable -->
-                <NuxtLink to="/admin/users" class="block">
+                <NuxtLink to="/admin/utilisateurs" class="block">
                   <div class="bg-gray-100 rounded-lg p-6 hover:bg-purple-50 hover:border-purple-200 border border-transparent transition-all duration-200 cursor-pointer transform hover:scale-105 h-full flex flex-col justify-between">
                     <div>
                       <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3" style="font-family: 'Freeman', sans-serif;">

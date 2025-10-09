@@ -94,13 +94,12 @@
           <div class="bg-white rounded-lg border border-gray-200">
             <!-- Table Header -->
             <div class="bg-gray-50 px-6 py-6 border-b border-gray-200">
-              <div class="grid grid-cols-7 gap-6 text-base font-medium text-gray-700">
-                <div>Id</div>
-                <div>Nom</div>
-                <div>Prenom</div>
-                <div>Email</div>
-                <div>Level</div>
-                <div>Xp</div>
+              <div class="grid grid-cols-6 gap-6 text-base font-medium text-gray-700">
+                <div>Nom d'utilisateur</div>
+                <div>Adresse email</div>
+                <div>Statut</div>
+                <div>Rôle</div>
+                <div>Expérience</div>
                 <div>Actions</div>
               </div>
             </div>
@@ -110,8 +109,7 @@
               <!-- Loading skeleton -->
               <div v-if="loading" class="px-6 py-6">
                 <div class="animate-pulse space-y-4">
-                  <div v-for="n in 3" :key="n" class="grid grid-cols-7 gap-6">
-                    <div class="h-4 bg-gray-200 rounded"></div>
+                  <div v-for="n in 3" :key="n" class="grid grid-cols-6 gap-6">
                     <div class="h-4 bg-gray-200 rounded"></div>
                     <div class="h-4 bg-gray-200 rounded"></div>
                     <div class="h-4 bg-gray-200 rounded"></div>
@@ -129,13 +127,20 @@
                 :key="user.id"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
-                <div class="grid grid-cols-7 gap-6 items-center text-base">
-                  <div class="text-gray-900 font-mono text-sm">{{ user.id }}</div>
-                  <div class="text-gray-900 font-medium">{{ user.lastname || user.nom || user.username || 'N/A' }}</div>
-                  <div class="text-gray-900 font-medium">{{ user.firstname || user.prenom || user.username || 'N/A' }}</div>
+                <div class="grid grid-cols-6 gap-6 items-center text-base">
+                  <div class="text-gray-900 font-medium">{{ user.username || 'N/A' }}</div>
                   <div class="text-gray-600">{{ user.email || 'N/A' }}</div>
-                  <div class="text-gray-900 font-bold">{{ user.level || user.xp_level || 1 }}</div>
-                  <div class="text-gray-900 font-bold">{{ user.xp || user.experience_points || 0 }}</div>
+                  <div class="flex items-center">
+                    <span :class="getStatusBadgeClass(user)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                      {{ getUserStatus(user) }}
+                    </span>
+                  </div>
+                  <div class="text-gray-700">{{ getUserRole(user) }}</div>
+                  <div class="flex items-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      {{ getUserExperience(user) }} XP
+                    </span>
+                  </div>
                   <div class="flex items-center space-x-3">
                     <button
                       @click="editUser(user)"
@@ -147,7 +152,7 @@
                       </svg>
                     </button>
                     <button
-                      @click="handleDeleteUser(user.id)"
+                      @click="handleDeleteUser(user.documentId || user.id)"
                       class="text-red-600 hover:text-red-800 transition-colors duration-200 p-2"
                       title="Supprimer"
                     >
@@ -181,28 +186,16 @@
       
       <!-- Formulaire d'édition -->
       <div v-if="editingUser" class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <!-- Nom -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
-            <input 
-              v-model="editingUser.lastname"
-              type="text" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Nom de famille"
-            />
-          </div>
-          
-          <!-- Prénom -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
-            <input 
-              v-model="editingUser.firstname"
-              type="text" 
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Prénom"
-            />
-          </div>
+        <!-- Username -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Nom d'utilisateur</label>
+          <input 
+            v-model="editingUser.username"
+            type="text" 
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Nom d'utilisateur (min. 3 caractères)"
+            required
+          />
         </div>
         
         <!-- Email -->
@@ -213,33 +206,42 @@
             type="email" 
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
             placeholder="Email"
+            required
           />
         </div>
         
         <div class="grid grid-cols-2 gap-4">
-          <!-- Level -->
+          <!-- Experience -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Expérience</label>
             <input 
-              v-model="editingUser.level"
-              type="number" 
-              min="1"
-              max="100"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Niveau"
-            />
-          </div>
-          
-          <!-- XP -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">XP</label>
-            <input 
-              v-model="editingUser.xp"
+              v-model="editingUser.experience"
               type="number" 
               min="0"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Points d'expérience"
             />
+          </div>
+          
+          <!-- Status toggles -->
+          <div class="space-y-3">
+            <div class="flex items-center">
+              <input 
+                v-model="editingUser.confirmed"
+                type="checkbox" 
+                class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+              />
+              <label class="ml-2 block text-sm text-gray-900">Compte confirmé</label>
+            </div>
+            
+            <div class="flex items-center">
+              <input 
+                v-model="editingUser.blocked"
+                type="checkbox" 
+                class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+              />
+              <label class="ml-2 block text-sm text-gray-900">Compte bloqué</label>
+            </div>
           </div>
         </div>
         
@@ -302,8 +304,12 @@ const {
   loading, 
   error, 
   fetchUsers, 
+  updateUser,
   deleteUser,
-  testConnection
+  testConnection,
+  getUserRole,
+  getUserStatus,
+  getUserExperience
 } = await useUsers()
 
 // Chargement initial des utilisateurs
@@ -328,9 +334,24 @@ const newUsers = computed(() => {
   }).length
 })
 
+// Fonctions d'aide pour l'affichage cohérent selon le schéma Strapi
+const getStatusBadgeClass = (user) => {
+  if (user.blocked) return 'bg-red-100 text-red-800'
+  if (!user.confirmed) return 'bg-yellow-100 text-yellow-800'
+  return 'bg-green-100 text-green-800'
+}
+
 // Fonctions pour les actions utilisateur
 const editUser = (user) => {
-  editingUser.value = { ...user }
+  editingUser.value = { 
+    ...user,
+    // Normaliser les champs pour l'édition selon le schéma réel
+    username: user.username || '',
+    email: user.email || '',
+    experience: user.experience || 0,
+    confirmed: user.confirmed !== undefined ? user.confirmed : true,
+    blocked: user.blocked !== undefined ? user.blocked : false
+  }
   showEditModal.value = true
 }
 
@@ -338,29 +359,33 @@ const saveEditUser = async () => {
   if (!editingUser.value) return
   
   try {
-    // Préparer les données pour Strapi
+    // Préparer les données selon le schéma Strapi réel
     const userData = {
-      lastname: editingUser.value.lastname || editingUser.value.nom,
-      firstname: editingUser.value.firstname || editingUser.value.prenom,
+      username: editingUser.value.username,
       email: editingUser.value.email,
-      level: editingUser.value.level || editingUser.value.xp_level || 1,
-      xp: editingUser.value.xp || editingUser.value.experience_points || 0
+      experience: parseInt(editingUser.value.experience) || 0,
+      confirmed: editingUser.value.confirmed,
+      blocked: editingUser.value.blocked
     }
     
-    console.log('Utilisateur mis à jour:', userData)
+    // Utiliser documentId pour Strapi v5
+    const userIdToUse = editingUser.value.documentId || editingUser.value.id
+    console.log('🔄 Sauvegarde utilisateur avec ID:', userIdToUse, 'et données:', userData)
     
-    // TODO: Implémenter updateUser dans le composable
-    // await updateUser(editingUser.value.id, userData)
+    await updateUser(userIdToUse, userData)
+    
+    console.log('✅ Utilisateur mis à jour avec succès')
     
     // Fermer la modal
     showEditModal.value = false
     editingUser.value = null
     
-    // Rafraîchir la liste
-    await fetchUsers()
+    // PAS de refresh automatique - le composable met à jour localement
     
   } catch (err) {
-    console.error('Erreur lors de la mise à jour de l\'utilisateur:', err)
+    console.error('❌ Erreur lors de la mise à jour de l\'utilisateur:', err)
+    // Afficher un message d'erreur à l'utilisateur
+    alert('Erreur lors de la mise à jour. Vérifiez vos permissions et réessayez.')
   }
 }
 

@@ -104,21 +104,24 @@ export const useUsers = () => {
     try {
       const { strapiAdminApi } = await import('../service/ApiService.js')
       
+      // Utiliser documentId pour Strapi v5
       await strapiAdminApi.delete(`/content-manager/collection-types/plugin::users-permissions.user/${userId}`)
       
       // Mettre à jour la liste locale
-      users.value = users.value.filter(user => user.id !== userId)
+      users.value = users.value.filter(user => 
+        user.documentId !== userId && user.id !== userId
+      )
       
-      console.log(`\u2705 Utilisateur ${userId} supprimé avec succès`)
+      console.log(`✅ Utilisateur ${userId} supprimé avec succès`)
       error.value = null
       return true
       
     } catch (err) {
-      console.error(`\u274c Erreur lors de la suppression de l'utilisateur ${userId}:`, err)
+      console.error(`❌ Erreur lors de la suppression de l'utilisateur ${userId}:`, err)
       
       // Gestion détaillée des erreurs
       if (err.response?.status === 401) {
-        error.value = "Erreur d'authentification : Veuillez vous reconnecter \u00e0 l'admin Strapi"
+        error.value = "Erreur d'authentification : Veuillez vous reconnecter à l'admin Strapi"
       } else if (err.response?.status === 404) {
         error.value = `Utilisateur ${userId} non trouvé ou déjà supprimé`
       } else if (err.response?.status === 403) {
@@ -136,15 +139,49 @@ export const useUsers = () => {
     try {
       const { strapiAdminApi } = await import('../service/ApiService.js')
       
-      const response = await strapiAdminApi.put(`/content-manager/collection-types/plugin::users-permissions.user/${userId}`, userData)
+      console.log(`🔄 Mise à jour utilisateur ${userId} avec:`, userData)
       
-      // Mettre à jour dans la liste locale
-      const index = users.value.findIndex(user => user.id === userId)
-      if (index !== -1) {
-        users.value[index] = response.data || response
+      // Valider les champs selon le schéma Strapi
+      const validUserData = {
+        username: userData.username,
+        email: userData.email,
+        experience: userData.experience ? parseInt(userData.experience) : null,
+        confirmed: userData.confirmed !== undefined ? userData.confirmed : true,
+        blocked: userData.blocked !== undefined ? userData.blocked : false
       }
       
-      console.log(`✅ Utilisateur ${userId} mis à jour avec succès`)
+      // Supprimer les champs null/undefined
+      Object.keys(validUserData).forEach(key => {
+        if (validUserData[key] === null || validUserData[key] === undefined) {
+          delete validUserData[key]
+        }
+      })
+      
+      console.log('📋 Données validées pour Strapi:', validUserData)
+      
+      // Utiliser documentId pour Strapi v5
+      const response = await strapiAdminApi.put(`/content-manager/collection-types/plugin::users-permissions.user/${userId}`, validUserData)
+      
+      console.log('✅ Réponse de mise à jour:', response)
+      
+      // Mettre à jour dans la liste locale
+      const index = users.value.findIndex(user => 
+        user.documentId === userId || user.id === userId
+      )
+      if (index !== -1) {
+        // Fusionner les nouvelles données avec les anciennes
+        users.value[index] = {
+          ...users.value[index],
+          ...(response.data || response),
+          // S'assurer que les champs modifiés sont bien mis à jour
+          ...validUserData
+        }
+        console.log(`✅ Utilisateur ${userId} mis à jour localement:`, users.value[index])
+      } else {
+        console.warn(`⚠️ Utilisateur ${userId} non trouvé dans la liste locale`)
+      }
+      
+      error.value = null
       return response.data || response
       
     } catch (err) {
@@ -220,12 +257,22 @@ export const useUsers = () => {
     }
   }
 
-  // Méthodes utilitaires pour l'affichage
+  // Méthodes utilitaires pour l'affichage selon le schéma Strapi réel
   const getUserRole = (user) => {
     if (user.role) {
       return user.role.name || user.role.type || 'Utilisateur'
     }
     return 'Utilisateur'
+  }
+
+  const getUserStatus = (user) => {
+    if (user.blocked) return 'Bloqué'
+    if (!user.confirmed) return 'Non confirmé'
+    return 'Actif'
+  }
+
+  const getUserExperience = (user) => {
+    return user.experience ? parseInt(user.experience) : 0
   }
 
   const formatDate = (dateString) => {
@@ -263,6 +310,8 @@ export const useUsers = () => {
     
     // Utilitaires
     getUserRole,
+    getUserStatus,
+    getUserExperience,
     formatDate
   }
 }

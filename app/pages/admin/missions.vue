@@ -14,17 +14,8 @@
       
       <div class="flex-1 flex flex-col overflow-hidden ml-8">
         
-        <!-- Stats Section -->const handleDeleteMission = async (missionId) => {
-  if (confirm('\u00cates-vous s\u00fbr de vouloir supprimer cette mission ?')) {
-    const success = await deleteMission(missionId)
-    if (!success && error.value) {
-      // Afficher l'erreur pendant 5 secondes
-      setTimeout(() => {
-        error.value = null
-      }, 5000)
-    }
-  }
-}    <div class="mb-12 flex-shrink-0">
+        <!-- Stats Section -->
+        <div class="mb-12 flex-shrink-0">
           <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-12">
             <!-- Missions totales -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
@@ -49,76 +40,62 @@
         <!-- Add Mission Section -->
         <div class="mb-12 flex-shrink-0">
           <div class="bg-white rounded-lg border border-gray-200">
-            <!-- Header -->
-            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-              <h3 class="text-lg font-semibold text-gray-900">Ajouter une nouvelle mission</h3>
-              <p class="text-sm text-gray-600 mt-1">Créez une mission avec géolocalisation et succès</p>
+            <!-- Header avec gradient -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 border-b border-gray-200 rounded-t-lg">
+              <h3 class="text-lg font-semibold text-white">Ajouter une nouvelle mission</h3>
+              <p class="text-blue-100 mt-1">Créez une mission avec géolocalisation et description</p>
             </div>
 
-            <!-- Formulaire -->
-            <div class="p-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <!-- Titre -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Titre <span class="text-red-500">*</span></label>
-                  <input 
-                    v-model="newMission.title"
-                    type="text" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="Nom de la mission (min. 5 caractères)"
-                    required
-                  />
-                </div>
-                
-                <!-- Latitude -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
-                  <input 
-                    v-model="newMission.latitude"
-                    type="number" 
-                    step="any"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="ex: 50.8503"
-                  />
-                </div>
-                
-                <!-- Longitude -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
-                  <input 
-                    v-model="newMission.longitude"
-                    type="number" 
-                    step="any"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="ex: 4.3517"
-                  />
-                </div>
-              </div>
+            <!-- Onglets -->
+            <div class="border-b border-gray-200">
+              <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                <button
+                  v-for="tab in tabs"
+                  :key="tab.id"
+                  @click="setActiveTab(tab.id)"
+                  :class="[
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                    'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2'
+                  ]"
+                >
+                  <span>{{ tab.icon }}</span>
+                  <span>{{ tab.label }}</span>
+                </button>
+              </nav>
+            </div>
 
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <!-- Description -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                  <textarea 
-                    v-model="newMission.description"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    placeholder="Description de la mission"
-                    rows="3"
-                  ></textarea>
-                </div>
-                
-                <!-- Threshold et Statut -->
-                <div class="space-y-4">
+            <!-- Contenu des onglets -->
+            <div class="p-6">
+              <!-- Onglet Informations -->
+              <div v-if="activeTab === 'infos'" class="space-y-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Informations générales</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Titre -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Threshold ( mètres )</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Titre <span class="text-red-500">*</span></label>
+                    <input 
+                      v-model="newMission.title"
+                      type="text" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="Nom de la mission (min. 5 caractères)"
+                      required
+                    />
+                  </div>
+                  
+                  <!-- Threshold -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Threshold (mètres)</label>
                     <input 
                       v-model="newMission.threshold"
                       type="number" 
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Seuil requis"
+                      placeholder="Seuil requis en mètres"
                     />
                   </div>
                   
+                  <!-- Statut -->
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
                     <select 
@@ -131,9 +108,110 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Onglet Localisation -->
+              <div v-if="activeTab === 'location'" class="space-y-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Géolocalisation</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <!-- Latitude -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+                    <input 
+                      v-model="newMission.latitude"
+                      type="number" 
+                      step="any"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="ex: 50.8503"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">Coordonnée latitude de la mission</p>
+                  </div>
+                  
+                  <!-- Longitude -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+                    <input 
+                      v-model="newMission.longitude"
+                      type="number" 
+                      step="any"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="ex: 4.3517"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">Coordonnée longitude de la mission</p>
+                  </div>
+                  
+                  <!-- Adresse (optionnel) -->
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Adresse (optionnel)</label>
+                    <input 
+                      v-model="newMission.address"
+                      type="text" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="Adresse approximative du lieu"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Onglet Description -->
+              <div v-if="activeTab === 'description'" class="space-y-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Description détaillée</h4>
+                <div class="space-y-4">
+                  <!-- Description -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea 
+                      v-model="newMission.description"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="Description détaillée de la mission"
+                      rows="4"
+                    ></textarea>
+                    <p class="mt-1 text-sm text-gray-500">Décrivez l'objectif et les détails de la mission</p>
+                  </div>
+                  
+                  <!-- Instructions -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
+                    <textarea 
+                      v-model="newMission.instructions"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="Instructions spécifiques pour accomplir la mission"
+                      rows="3"
+                    ></textarea>
+                    <p class="mt-1 text-sm text-gray-500">Instructions détaillées pour les utilisateurs</p>
+                  </div>
+                  
+                  <!-- Type de mission -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Type de mission</label>
+                    <select 
+                      v-model="newMission.type"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="exploration">Exploration</option>
+                      <option value="photo">Photo</option>
+                      <option value="enquete">Enquête</option>
+                      <option value="decouverte">Découverte</option>
+                    </select>
+                  </div>
+                  
+                  <!-- Difficulté -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Difficulté</label>
+                    <select 
+                      v-model="newMission.difficulty"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="facile">Facile</option>
+                      <option value="moyen">Moyen</option>
+                      <option value="difficile">Difficile</option>
+                      <option value="expert">Expert</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
               
-              <!-- Actions -->
-              <div class="flex gap-3 pt-4">
+              <!-- Actions (toujours visibles) -->
+              <div class="flex gap-3 pt-6 border-t border-gray-200 mt-6">
                 <button
                   @click="createMission"
                   :disabled="!canCreateMission || isCreating"
@@ -281,7 +359,7 @@
                       </svg>
                     </button>
                     <button
-                      @click="handleDeleteMission(mission.id)"
+                      @click="handleDeleteMission(mission.documentId || mission.id)"
                       class="text-red-600 hover:text-red-800 transition-colors duration-200 p-2"
                       title="Supprimer"
                     >
@@ -458,6 +536,18 @@ const {
   testConnection
 } = await useMissions()
 
+// Gestion des onglets pour l'ajout de mission
+const activeTab = ref('infos')
+const tabs = [
+  { id: 'infos', label: 'Informations', icon: '📝' },
+  { id: 'location', label: 'Localisation', icon: '📍' },
+  { id: 'description', label: 'Description', icon: '📋' }
+]
+
+const setActiveTab = (tabId) => {
+  activeTab.value = tabId
+}
+
 // Chargement initial des missions
 await fetchMissions()
 
@@ -465,9 +555,13 @@ await fetchMissions()
 const newMission = ref({
   title: '',
   description: '',
+  instructions: '',
   latitude: null,
   longitude: null,
+  address: '',
   threshold: null,
+  type: 'exploration',
+  difficulty: 'moyen',
   published: false
 })
 
@@ -487,9 +581,13 @@ const clearForm = () => {
   newMission.value = {
     title: '',
     description: '',
+    instructions: '',
     latitude: null,
     longitude: null,
+    address: '',
     threshold: null,
+    type: 'exploration',
+    difficulty: 'moyen',
     published: false
   }
 }
@@ -504,9 +602,13 @@ const createMission = async () => {
     const missionData = {
       title: newMission.value.title,
       description: newMission.value.description || '',
+      instructions: newMission.value.instructions || '',
       latitude: newMission.value.latitude,
       longitude: newMission.value.longitude,
+      address: newMission.value.address || '',
       threshold: newMission.value.threshold,
+      type: newMission.value.type || 'exploration',
+      difficulty: newMission.value.difficulty || 'moyen',
       published: newMission.value.published
     }
     

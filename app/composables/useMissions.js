@@ -1,6 +1,6 @@
 /**
  * Composable pour la gestion des missions avec Strapi
- * Récupère les données dynamiques depuis la base de données
+ * Gestion directe de la collection missions via l'API Admin Strapi
  */
 import { ref, computed, readonly } from 'vue'
 
@@ -17,10 +17,10 @@ export default async function useMissions() {
   // Computed properties pour les statistiques
   const totalMissions = computed(() => missions.value.length)
   const publishedMissions = computed(() => 
-    missions.value.filter(mission => mission.publishedAt != null).length
+    missions.value.filter(mission => mission.published === true).length
   )
   const draftMissions = computed(() => 
-    missions.value.filter(mission => mission.publishedAt == null).length
+    missions.value.filter(mission => mission.published === false).length
   )
 
   /**
@@ -35,11 +35,29 @@ export default async function useMissions() {
       
       console.log('🔄 Récupération des missions depuis Strapi...')
       
+      // Récupérer les missions directement depuis la collection mission
       const response = await strapiAdminApi.get('/content-manager/collection-types/api::mission.mission?page=1&pageSize=100')
       
       if (response && response.results) {
-        missions.value = response.results
+        missions.value = response.results.map(mission => ({
+          id: mission.id,
+          documentId: mission.documentId,
+          title: mission.title || mission.name || 'Mission sans titre',
+          description: mission.description || '',
+          latitude: mission.latitude || null,
+          longitude: mission.longitude || null,
+          address: mission.address || '',
+          type: mission.type || 'exploration',
+          difficulty: mission.difficulty || 'moyen',
+          instructions: mission.instructions || '',
+          published: mission.publishedAt != null,
+          publishedAt: mission.publishedAt,
+          createdAt: mission.createdAt,
+          updatedAt: mission.updatedAt
+        }))
+        
         console.log(`✅ ${response.results.length} missions récupérées avec succès`)
+        console.log('🔍 Structure d\'une mission:', response.results[0])
       } else {
         console.warn('⚠️ Structure de réponse inattendue:', response)
         missions.value = []
@@ -88,21 +106,47 @@ export default async function useMissions() {
   /**
    * Créer une nouvelle mission
    */
+  /**
+   * Créer une nouvelle mission (en créant un nouveau circuit)
+   */
   const createMission = async (missionData) => {
     try {
       const { strapiAdminApi } = await import('../service/ApiService.js')
       
-      const response = await strapiAdminApi.post('/content-manager/collection-types/api::mission.mission', missionData)
+      console.log('🔄 Création d\'un nouveau circuit avec mission...')
       
-      // Ajouter à la liste locale
-      const newMission = response.data || response
-      missions.value.unshift(newMission) // Ajouter au début de la liste
+      // Créer un circuit avec la mission comme composant
+      const circuitData = {
+        name: missionData.title || 'Circuit sans nom',
+        description: missionData.description || '',
+        duration: 60, // Durée par défaut en minutes
+        like: 0,
+        Missions: [{
+          title: missionData.title,
+          description: missionData.description,
+          latitude: missionData.latitude,
+          longitude: missionData.longitude,
+          type: missionData.type || 'exploration',
+          difficulty: missionData.difficulty || 'moyen',
+          instructions: missionData.instructions || ''
+        }],
+        address: missionData.address ? {
+          street: missionData.address,
+          latitude: missionData.latitude,
+          longitude: missionData.longitude
+        } : null
+      }
       
-      console.log('✅ Nouvelle mission créée avec succès')
-      return newMission
+      const response = await strapiAdminApi.post('/content-manager/collection-types/api::circuit.circuit', circuitData)
+      
+      // Recharger toutes les missions pour refléter les changements
+      await fetchMissions()
+      
+      console.log('✅ Nouveau circuit avec mission créé avec succès')
+      return response
       
     } catch (err) {
-      console.error('❌ Erreur lors de la création de la mission:', err)
+      console.error('❌ Erreur lors de la création du circuit/mission:', err)
       error.value = `Impossible de créer la mission: ${err.message}`
       throw err
     }

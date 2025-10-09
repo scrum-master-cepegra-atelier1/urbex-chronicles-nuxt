@@ -167,6 +167,24 @@
                         placeholder="Ex: 120"
                       />
                     </div>
+                    
+                    <div>
+                      <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <span class="flex items-center">
+                          <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                          </svg>
+                          Likes (nombre initial)
+                        </span>
+                      </label>
+                      <input 
+                        v-model="newCircuit.like"
+                        type="number" 
+                        min="0"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
                   
                   <!-- Colonne droite - Adresse et Commentaires -->
@@ -220,6 +238,24 @@
                       </div>
                     </div>
                     
+                    <!-- Section Missions -->
+                    <div class="bg-green-50 rounded-lg p-6 border border-green-200">
+                      <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Missions associées
+                      </h3>
+                      <p class="text-sm text-gray-600 mb-4">
+                        Les missions seront ajoutées après la création du circuit
+                      </p>
+                      <div class="bg-white rounded-md p-3 border border-green-200">
+                        <p class="text-sm text-gray-500 italic">
+                          {{ newCircuit.Missions.length }} mission(s) sélectionnée(s)
+                        </p>
+                      </div>
+                    </div>
+                    
                   
                   <!-- Actions -->
                   <div class="pt-6 border-t border-gray-100">
@@ -261,13 +297,14 @@
           <div class="bg-white rounded-lg border border-gray-200">
             <!-- Table Header -->
             <div class="bg-gray-50 px-6 py-6 border-b border-gray-200">
-              <div class="grid grid-cols-7 gap-6 text-base font-medium text-gray-700">
+              <div class="grid grid-cols-8 gap-4 text-base font-medium text-gray-700">
                 <div>Nom</div>
                 <div>Description</div>
-                <div>Durée</div>
-                <div>Ville</div>
+                <div>Durée (min)</div>
                 <div>Likes</div>
-                <div>Commentaires</div>
+                <div>Adresse</div>
+                <div>Missions</div>
+                <div>Statut</div>
                 <div>Actions</div>
               </div>
             </div>
@@ -289,26 +326,63 @@
                 :key="circuit.id || index"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
-                <div class="grid grid-cols-7 gap-6 items-center text-base">
-                  <div class="text-gray-900 font-medium">{{ circuit.name || 'N/A' }}</div>
-                  <div class="text-gray-600 truncate">{{ circuit.description || 'Aucune description' }}</div>
-                  <div class="text-gray-600">{{ formatDuration(circuit.duration) }}</div>
-                  <div class="text-gray-600">{{ getCircuitAddress(circuit) }}</div>
+                <div class="grid grid-cols-8 gap-4 items-center text-sm">
+                  <!-- Nom (string) -->
+                  <div class="text-gray-900 font-medium">
+                    {{ circuit.name || 'N/A' }}
+                  </div>
+                  
+                  <!-- Description (text) -->
+                  <div class="text-gray-600 truncate max-w-32" :title="circuit.description">
+                    {{ circuit.description ? (circuit.description.length > 50 ? circuit.description.substring(0, 50) + '...' : circuit.description) : 'Aucune description' }}
+                  </div>
+                  
+                  <!-- Duration (biginteger) -->
+                  <div class="text-gray-600">
+                    {{ circuit.duration ? circuit.duration + ' min' : 'N/A' }}
+                  </div>
+                  
+                  <!-- Like (integer) -->
                   <div class="text-gray-600 flex items-center">
                     <svg class="w-4 h-4 text-red-500 mr-1" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                     </svg>
-                    {{ circuit.likes || circuit.like || 0 }}
+                    {{ circuit.like || 0 }}
                   </div>
                   
+                  <!-- Address (component) -->
                   <div class="text-gray-600">
-                    <span 
-                      @click="showCommentsOverlay(circuit)" 
-                      class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs cursor-pointer hover:bg-green-200 transition-colors duration-200"
-                    >
-                      {{ (circuit.comments || []).length }} commentaires
+                    <span v-if="circuit.address && (circuit.address.city || circuit.address.street)" 
+                          class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs" 
+                          :title="getCircuitAddress(circuit)">
+                      📍 {{ circuit.address.city || circuit.address.street || 'Adresse' }}
+                    </span>
+                    <span v-else class="text-gray-400 text-xs">Pas d'adresse</span>
+                  </div>
+                  
+                  <!-- Missions (component repeatable) -->
+                  <div class="text-gray-600">
+                    <span v-if="circuit.Missions && circuit.Missions.length > 0" 
+                          class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs cursor-pointer hover:bg-purple-200 transition-colors duration-200"
+                          @click="viewCircuitMissions(circuit)">
+                      🎯 {{ circuit.Missions.length }} mission(s)
+                    </span>
+                    <span v-else class="text-gray-400 text-xs">Aucune mission</span>
+                  </div>
+                  
+                  <!-- Statut (draftAndPublish) -->
+                  <div class="text-gray-600">
+                    <span v-if="circuit.publishedAt" 
+                          class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                      🌍 Publié
+                    </span>
+                    <span v-else 
+                          class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                      📝 Brouillon
                     </span>
                   </div>
+                  
+                  <!-- Actions -->
                   <div class="flex items-center space-x-3">
                     <!-- Bouton Archiver/Désarchiver -->
                     <button
@@ -765,82 +839,222 @@
       <!-- Formulaire d'édition -->
       <div v-if="editingCircuit" class="space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Colonne gauche -->
+          <!-- Colonne gauche - Informations générales -->
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Nom du circuit</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <span class="flex items-center">
+                  <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  Nom du circuit *
+                </span>
+              </label>
               <input 
                 v-model="editingCircuit.name"
                 type="text" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Nom du circuit"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                placeholder="Ex: Circuit du Château abandonné"
               />
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <span class="flex items-center">
+                  <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                  </svg>
+                  Description
+                </span>
+              </label>
               <textarea 
                 v-model="editingCircuit.description"
                 rows="4"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Description du circuit"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 resize-none"
+                placeholder="Décrivez ce circuit urbex, ses points d'intérêt, son niveau de difficulté..."
               ></textarea>
             </div>
             
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Durée (minutes)</label>
-              <input 
-                v-model="editingCircuit.duration"
-                type="number" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Durée en minutes"
-              />
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Durée (min)
+                  </span>
+                </label>
+                <input 
+                  v-model.number="editingCircuit.duration"
+                  type="number" 
+                  min="0"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  placeholder="120"
+                />
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <span class="flex items-center">
+                    <svg class="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    Likes
+                  </span>
+                </label>
+                <input 
+                  v-model.number="editingCircuit.like"
+                  type="number" 
+                  min="0"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            
+            <!-- Section Statut de publication (draftAndPublish) -->
+            <div class="bg-green-50 rounded-lg p-4 border border-green-200">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                <span class="flex items-center">
+                  <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  État de publication
+                </span>
+              </label>
+              <select 
+                v-model="editingCircuit.publishedAt"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              >
+                <option :value="null">📝 Brouillon (non publié)</option>
+                <option :value="new Date().toISOString()">🌍 Publié (visible par tous)</option>
+              </select>
+              <p class="text-xs text-gray-500 mt-1">
+                Les brouillons ne sont visibles que par les administrateurs
+              </p>
             </div>
           </div>
           
-          <!-- Colonne droite -->
+          <!-- Colonne droite - Composants -->
           <div class="space-y-4">
-            <div v-if="editingCircuit.address">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
-              <div class="space-y-2">
-                <input 
-                  v-model="editingCircuit.address.street"
-                  type="text" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Rue"
-                />
-                <input 
-                  v-model="editingCircuit.address.city"
-                  type="text" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ville"
-                />
-                <div class="grid grid-cols-2 gap-2">
+            <!-- Component Address -->
+            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Adresse (Component)
+              </h4>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Rue</label>
                   <input 
-                    v-model="editingCircuit.address.zipCode"
+                    v-model="editingCircuit.address.street"
                     type="text" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Code postal"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                    placeholder="123 Rue de l'Urbex"
                   />
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                    <input 
+                      v-model="editingCircuit.address.city"
+                      type="text" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      placeholder="Bruxelles"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Code postal</label>
+                    <input 
+                      v-model="editingCircuit.address.zipCode"
+                      type="text" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                      placeholder="1000"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Pays</label>
                   <input 
                     v-model="editingCircuit.address.country"
                     type="text" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Pays"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                    placeholder="Belgique"
                   />
                 </div>
               </div>
             </div>
             
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-              <select 
-                v-model="editingCircuit.published"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option :value="true">Publié</option>
-                <option :value="false">Archivé</option>
-              </select>
+            <!-- Component Missions (repeatable) -->
+            <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+              <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Missions (Component - repeatable)
+              </h4>
+              <div class="bg-white rounded-md p-3 border border-purple-200">
+                <p class="text-sm text-gray-600 mb-2">
+                  Missions associées : 
+                  <span class="font-medium">{{ (editingCircuit.Missions || []).length }} mission(s)</span>
+                </p>
+                <div v-if="editingCircuit.Missions && editingCircuit.Missions.length > 0" class="space-y-2">
+                  <div v-for="(mission, index) in editingCircuit.Missions" :key="index" 
+                       class="flex items-center justify-between bg-gray-50 p-2 rounded">
+                    <span class="text-sm">{{ mission.name || mission.title || `Mission ${index + 1}` }}</span>
+                    <button @click="removeMission(index)" 
+                            class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50">
+                      ✕ Retirer
+                    </button>
+                  </div>
+                </div>
+                <p v-else class="text-sm text-gray-500 italic">
+                  Aucune mission associée pour le moment
+                </p>
+                <button 
+                  @click="addMission" 
+                  class="mt-2 text-purple-600 hover:text-purple-800 text-sm underline">
+                  + Ajouter une mission
+                </button>
+              </div>
+            </div>
+            
+            <!-- Component Comments (repeatable) -->
+            <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+              <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+                Commentaires (Component - repeatable)
+              </h4>
+              <div class="bg-white rounded-md p-3 border border-yellow-200">
+                <p class="text-sm text-gray-600 mb-2">
+                  <span class="font-medium">{{ (editingCircuit.comments || []).length }} commentaire(s)</span>
+                </p>
+                <div v-if="editingCircuit.comments && editingCircuit.comments.length > 0" class="space-y-2 max-h-32 overflow-y-auto">
+                  <div v-for="(comment, index) in editingCircuit.comments" :key="index" 
+                       class="bg-gray-50 p-2 rounded text-sm">
+                    <strong>{{ comment.author || 'Anonyme' }}:</strong>
+                    <span class="text-gray-600">{{ comment.content || comment.text || 'Pas de contenu' }}</span>
+                  </div>
+                </div>
+                <p v-else class="text-sm text-gray-500 italic">
+                  Aucun commentaire pour le moment
+                </p>
+                <button 
+                  @click="viewCircuitComments(editingCircuit)" 
+                  class="mt-2 text-yellow-600 hover:text-yellow-800 text-sm underline">
+                  Gérer les commentaires
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -932,14 +1146,15 @@ const newCircuit = ref({
   name: '',
   description: '',
   duration: 60,
-  difficulty: 'Facile',
+  like: 0,
   address: {
     street: '',
     city: '',
     zipCode: '',
     country: 'Belgique'
   },
-  published: false
+  Missions: [], // Array of missions (component)
+  comments: []  // Array of comments (component)
 })
 
 // États pour les modals
@@ -980,14 +1195,15 @@ const resetForm = () => {
     name: '',
     description: '',
     duration: 60,
-    difficulty: 'Facile',
+    like: 0,
     address: {
       street: '',
       city: '',
       zipCode: '',
       country: 'Belgique'
     },
-    published: false
+    Missions: [], // Array of missions (component)
+    comments: []  // Array of comments (component)
   }
 }
 
@@ -1017,7 +1233,9 @@ const handleDeleteCircuit = async (circuit) => {
 
 const confirmDelete = async () => {
   if (circuitToDelete.value) {
-    const success = await deleteCircuit(circuitToDelete.value.id)
+    // Utiliser documentId pour Strapi v5, fallback sur id
+    const idToUse = circuitToDelete.value.documentId || circuitToDelete.value.id
+    const success = await deleteCircuit(idToUse)
     if (success) {
       showSuccessMessage('Circuit supprimé avec succès !')
     } else if (error.value) {
@@ -1034,25 +1252,107 @@ const confirmDelete = async () => {
 }
 
 const handleEditCircuit = (circuit) => {
-  editingCircuit.value = { ...circuit }
+  // Cloner le circuit avec initialisation des objets manquants selon le schéma Strapi
+  editingCircuit.value = { 
+    ...circuit,
+    // S'assurer que l'adresse existe (component address)
+    address: circuit.address || {
+      street: '',
+      city: '',
+      zipCode: '',
+      country: 'Belgique'
+    },
+    // S'assurer que les missions existent (component mission repeatable)
+    Missions: circuit.Missions || [],
+    // S'assurer que les commentaires existent (component comment repeatable)
+    comments: circuit.comments || [],
+    // Gérer le statut de publication (draftAndPublish)
+    publishedAt: circuit.publishedAt || null,
+    // S'assurer que les champs obligatoires sont présents
+    name: circuit.name || '',
+    description: circuit.description || '',
+    duration: circuit.duration || null,
+    like: circuit.like || 0
+  }
   showEditModal.value = true
+}
+
+// Fonction pour supprimer une mission (component repeatable)
+const removeMission = (index) => {
+  if (editingCircuit.value.Missions && editingCircuit.value.Missions.length > index) {
+    editingCircuit.value.Missions.splice(index, 1)
+  }
+}
+
+// Fonction pour ajouter une mission (component repeatable)
+const addMission = () => {
+  if (!editingCircuit.value.Missions) {
+    editingCircuit.value.Missions = []
+  }
+  // Ajouter une mission vide selon le schema du component mission
+  editingCircuit.value.Missions.push({
+    name: '',
+    description: '',
+    type: '',
+    difficulty: '',
+    points: 0
+  })
 }
 
 const saveEditCircuit = async () => {
   try {
-    await updateCircuit(editingCircuit.value.id, editingCircuit.value)
-    showSuccessMessage('Circuit mis à jour avec succès !')
+    if (!editingCircuit.value.name) {
+      showErrorMessage('Le nom du circuit est obligatoire')
+      return
+    }
+
+    loading.value = true
+    
+    // Préparer les données selon le schéma Strapi exact
+    const updateData = {
+      // Champ string
+      name: editingCircuit.value.name,
+      // Champ text
+      description: editingCircuit.value.description || '',
+      // Champ biginteger
+      duration: editingCircuit.value.duration ? parseInt(editingCircuit.value.duration) : null,
+      // Champ integer
+      like: editingCircuit.value.like ? parseInt(editingCircuit.value.like) : 0,
+      // Component address (non repeatable)
+      address: editingCircuit.value.address || null,
+      // Component mission (repeatable)
+      Missions: editingCircuit.value.Missions || [],
+      // Component comment (repeatable)
+      comments: editingCircuit.value.comments || []
+    }
+
+    console.log('💾 Sauvegarde des données circuit selon schéma Strapi:', updateData)
+    
+    // Utiliser documentId pour Strapi v5, fallback sur id
+    const idToUse = editingCircuit.value.documentId || editingCircuit.value.id
+    
+    await updateCircuit(idToUse, updateData)
+    
+    showSuccessMessage('✅ Circuit mis à jour avec succès !')
     showEditModal.value = false
     editingCircuit.value = null
+    
+    // Recharger la liste des circuits
     await fetchCircuits()
+    
   } catch (err) {
-    console.error('Erreur lors de la mise à jour:', err)
+    console.error('❌ Erreur lors de la mise à jour:', err)
+    showErrorMessage(`Erreur lors de la mise à jour: ${err.message}`)
+  } finally {
+    loading.value = false
   }
 }
 
 const handleToggleStatus = async (circuit) => {
   try {
-    await toggleCircuitStatus(circuit.id, !circuit.published)
+    // Utiliser documentId pour Strapi v5, fallback sur id
+    const idToUse = circuit.documentId || circuit.id
+    await toggleCircuitStatus(idToUse, !circuit.published)
     showSuccessMessage(`Circuit ${circuit.published ? 'archivé' : 'désarchivé'} avec succès !`)
     await fetchCircuits()
   } catch (err) {
@@ -1066,6 +1366,14 @@ const showSuccessMessage = (message) => {
   setTimeout(() => {
     successMessage.value = ''
   }, 3000)
+}
+
+// Fonction pour afficher un message d'erreur
+const showErrorMessage = (message) => {
+  error.value = message
+  setTimeout(() => {
+    error.value = ''
+  }, 5000)
 }
 
 // Fonction pour rafraîchir les données
@@ -1233,6 +1541,19 @@ const showCommentsOverlay = (circuit) => {
 const closeCommentsOverlay = () => {
   showCommentsModal.value = false
   selectedCircuit.value = null
+}
+
+// Fonction pour afficher les missions d'un circuit
+const viewCircuitMissions = (circuit) => {
+  console.log('Missions du circuit:', circuit.name, circuit.Missions)
+  // Pour l'instant, on affiche juste dans la console
+  // Plus tard, on peut créer un modal pour gérer les missions
+  if (circuit.Missions && circuit.Missions.length > 0) {
+    alert(`Ce circuit a ${circuit.Missions.length} mission(s):\n` + 
+          circuit.Missions.map(m => `- ${m.name || m.title || 'Mission sans nom'}`).join('\n'))
+  } else {
+    alert('Ce circuit n\'a pas encore de missions associées.')
+  }
 }
 
 const editComment = (circuit, commentIndex) => {
