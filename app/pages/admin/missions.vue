@@ -210,6 +210,87 @@
                 </div>
               </div>
               
+              <!-- Onglet Médias -->
+              <div v-if="activeTab === 'medias'" class="space-y-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Médias</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">URL média</label>
+                    <input 
+                      v-model="newMission.media.url"
+                      type="url" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="https://..."
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Légende</label>
+                    <input 
+                      v-model="newMission.media.caption"
+                      type="text" 
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      placeholder="Texte alternatif / légende"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Onglet Achievements -->
+              <div v-if="activeTab === 'achievements'" class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-lg font-semibold text-gray-800">Achievements</h4>
+                  <button @click="addAchievementRow" class="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200">
+                    + Ajouter
+                  </button>
+                </div>
+                <div v-if="newMission.achievments.length === 0" class="text-sm text-gray-500">Aucun achievement. Cliquez sur "Ajouter".</div>
+                <div v-for="(ach, idx) in newMission.achievments" :key="idx" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end bg-gray-50 p-3 rounded border">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                    <input v-model="ach.name" type="text" class="w-full px-3 py-2 border border-gray-300 rounded" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">XP</label>
+                    <input v-model.number="ach.experience" type="number" min="0" class="w-full px-3 py-2 border border-gray-300 rounded" />
+                  </div>
+                  <div class="flex justify-end">
+                    <button @click="removeAchievementRow(idx)" class="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded">Retirer</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Onglet Types -->
+              <div v-if="activeTab === 'types'" class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-lg font-semibold text-gray-800">Types</h4>
+                  <button @click="addTypeRow" class="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200">
+                    + Ajouter
+                  </button>
+                </div>
+                <div v-if="newMission.types.length === 0" class="text-sm text-gray-500">Aucun type. Cliquez sur "Ajouter".</div>
+                <div v-for="(t, idx) in newMission.types" :key="idx" class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end bg-gray-50 p-3 rounded border">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                    <input v-model="t.name" type="text" class="w-full px-3 py-2 border border-gray-300 rounded" />
+                  </div>
+                  <div class="flex justify-end">
+                    <button @click="removeTypeRow(idx)" class="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded">Retirer</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Onglet Résumé -->
+              <div v-if="activeTab === 'resume'" class="space-y-2 text-sm">
+                <div><strong>Titre:</strong> {{ newMission.title || '—' }}</div>
+                <div><strong>Description:</strong> {{ newMission.description || '—' }}</div>
+                <div><strong>Lat/Lng:</strong> {{ newMission.latitude ?? '—' }} / {{ newMission.longitude ?? '—' }}</div>
+                <div><strong>Threshold:</strong> {{ newMission.threshold ?? '—' }}</div>
+                <div><strong>Média:</strong> {{ newMission.media?.url || '—' }}</div>
+                <div><strong>Achievements:</strong> {{ newMission.achievments.length }}</div>
+                <div><strong>Types:</strong> {{ newMission.types.length }}</div>
+                <div><strong>Statut:</strong> {{ newMission.published ? 'Publié' : 'Brouillon' }}</div>
+              </div>
+
               <!-- Actions (toujours visibles) -->
               <div class="flex gap-3 pt-6 border-t border-gray-200 mt-6">
                 <button
@@ -530,7 +611,6 @@ const {
   publishedMissions,
   draftMissions,
   fetchMissions, 
-  createMission: createMissionApi,
   updateMission,
   deleteMission,
   testConnection
@@ -541,7 +621,11 @@ const activeTab = ref('infos')
 const tabs = [
   { id: 'infos', label: 'Informations', icon: '📝' },
   { id: 'location', label: 'Localisation', icon: '📍' },
-  { id: 'description', label: 'Description', icon: '📋' }
+  { id: 'description', label: 'Description', icon: '📋' },
+  { id: 'medias', label: 'Médias', icon: '🖼️' },
+  { id: 'achievements', label: 'Achievements', icon: '🏆' },
+  { id: 'types', label: 'Types', icon: '🔖' },
+  { id: 'resume', label: 'Résumé', icon: '📄' }
 ]
 
 const setActiveTab = (tabId) => {
@@ -562,7 +646,10 @@ const newMission = ref({
   threshold: null,
   type: 'exploration',
   difficulty: 'moyen',
-  published: false
+  published: false,
+  media: { url: '', caption: '' },
+  achievments: [],
+  types: []
 })
 
 const isCreating = ref(false)
@@ -588,7 +675,10 @@ const clearForm = () => {
     threshold: null,
     type: 'exploration',
     difficulty: 'moyen',
-    published: false
+    published: false,
+    media: { url: '', caption: '' },
+    achievments: [],
+    types: []
   }
 }
 
@@ -599,6 +689,7 @@ const createMission = async () => {
   
   try {
     // Préparer les données pour Strapi
+    const { strapiAdminApi } = await import('../service/ApiService.js')
     const missionData = {
       title: newMission.value.title,
       description: newMission.value.description || '',
@@ -609,13 +700,18 @@ const createMission = async () => {
       threshold: newMission.value.threshold,
       type: newMission.value.type || 'exploration',
       difficulty: newMission.value.difficulty || 'moyen',
-      published: newMission.value.published
+      publishedAt: newMission.value.published ? new Date().toISOString() : null,
+      media: newMission.value.media?.url ? newMission.value.media : null,
+      achievments: newMission.value.achievments || [],
+      types: newMission.value.types || []
     }
     
-    // Créer la mission via l'API Strapi
-    await createMissionApi(missionData)
+    // Créer la mission via l'API Strapi (Content Manager)
+    await strapiAdminApi.post('/content-manager/collection-types/api::mission.mission', missionData)
     
-    // Afficher une notification de succès
+    // Rafraîchir la liste pour refléter la création
+    await fetchMissions()
+    
     console.log('Mission créée avec succès dans Strapi')
     
     // Réinitialiser le formulaire
@@ -627,6 +723,23 @@ const createMission = async () => {
   } finally {
     isCreating.value = false
   }
+}
+
+// Gestion des lignes Achievements/Types
+const addAchievementRow = () => {
+  newMission.value.achievments.push({ name: '', experience: 0 })
+}
+
+const removeAchievementRow = (index) => {
+  newMission.value.achievments.splice(index, 1)
+}
+
+const addTypeRow = () => {
+  newMission.value.types.push({ name: '' })
+}
+
+const removeTypeRow = (index) => {
+  newMission.value.types.splice(index, 1)
 }
 
 // Fonctions pour les actions sur les missions

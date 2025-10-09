@@ -1,4 +1,5 @@
 <template>
+<<<<<<< HEAD
   <div class="min-h-screen bg-white flex flex-col font-sans">
     <!-- Contenu principal centré -->
     <div class="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
@@ -7,6 +8,23 @@
         <div class="mb-6 sm:mb-8">
           <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 tracking-tight">Urbex Chronicles</h1>
           <p class="text-gray-600 mb-6 sm:mb-8 text-base sm:text-lg font-normal">L'urbex à coté de chez toi</p>
+=======
+  <div class="body">
+    test tailwind
+  </div>
+  <div class="login-page">
+    <div class="login-page__container">
+      <!-- Logo et titre -->
+      <div class="login-page__header">
+        <h1 class="login-page__header__title">URBEX CHRONICLES</h1>
+        <p class="login-page__header__subtitle">Administration - CMS</p>
+      </div>
+
+      <!-- Formulaire de connexion -->
+      <div class="login-page__form-container">
+        <form @submit.prevent="handleLogin" class="login-page__form">
+          <h2 class="login-page__form__title">Connexion</h2>
+>>>>>>> origin/feature/test
           
           <!-- Logo -->
           <div class="flex justify-center mb-4 sm:mb-6">
@@ -110,8 +128,12 @@
 </template>
 
 <script setup>
+<<<<<<< HEAD
 import AuthService from '../service/AuthService.js'
 
+=======
+import { useAuth } from '../composables/useAuth.js'
+>>>>>>> origin/feature/test
 // Meta de la page
 definePageMeta({
   title: 'Connexion'

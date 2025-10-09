@@ -249,10 +249,18 @@
                       <p class="text-sm text-gray-600 mb-4">
                         Les missions seront ajoutées après la création du circuit
                       </p>
-                      <div class="bg-white rounded-md p-3 border border-green-200">
+                      <div class="bg-white rounded-md p-3 border border-green-200 flex items-center justify-between">
                         <p class="text-sm text-gray-500 italic">
                           {{ newCircuit.Missions.length }} mission(s) sélectionnée(s)
                         </p>
+                        <button
+                          type="button"
+                          @click="openMissionModal"
+                          class="px-3 py-2 text-sm rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors"
+                          title="Créer une nouvelle mission"
+                        >
+                          + Nouvelle mission
+                        </button>
                       </div>
                     </div>
                     
@@ -435,6 +443,139 @@
       </div>
     </div>
   </main>
+
+  <!-- Modal de création de Mission (à onglets) -->
+  <div v-if="showMissionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="px-8 py-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-green-500 to-emerald-600">
+        <h3 class="text-2xl font-bold text-white" style="font-family: 'Do Hyeon', sans-serif;">Nouvelle mission</h3>
+        <button @click="closeMissionModal" class="text-white hover:text-emerald-200 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="px-8 pt-6">
+        <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+          <button
+            v-for="tab in missionTabs"
+            :key="tab"
+            @click="missionActiveTab = tab"
+            class="px-4 py-2 rounded-t-lg text-sm font-medium transition-colors"
+            :class="missionActiveTab === tab ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+          >
+            {{ tab }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab contents -->
+      <div class="p-8 space-y-6">
+        <!-- Infos -->
+        <div v-show="missionActiveTab === 'Infos'" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Titre de la mission *</label>
+            <input v-model="missionForm.title" type="text" minlength="5" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Ex: Trouver l'entrée secrète" />
+            <p class="text-xs text-gray-500 mt-1">Minimum 5 caractères, unique</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea v-model="missionForm.description" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Détails de la mission..."></textarea>
+          </div>
+        </div>
+
+        <!-- Localisation -->
+        <div v-show="missionActiveTab === 'Localisation'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+            <input v-model.number="missionForm.latitude" type="number" step="0.000001" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="50.85045" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+            <input v-model.number="missionForm.longitude" type="number" step="0.000001" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="4.34878" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Seuil (treshold)</label>
+            <input v-model.number="missionForm.treshold" type="number" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="0" />
+          </div>
+        </div>
+
+        <!-- Médias (component) -->
+        <div v-show="missionActiveTab === 'Médias'" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">URL média</label>
+            <input v-model="missionForm.media.url" type="url" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="https://..." />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Légende</label>
+            <input v-model="missionForm.media.caption" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Texte alternatif / légende" />
+          </div>
+        </div>
+
+        <!-- Achievements (repeatable component) -->
+        <div v-show="missionActiveTab === 'Achievements'" class="space-y-3">
+          <div class="flex justify-between items-center">
+            <h4 class="font-semibold">Achievments</h4>
+            <button @click="addAchievementRow" class="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200">+ Ajouter</button>
+          </div>
+          <div v-if="missionForm.achievments.length === 0" class="text-sm text-gray-500">Aucun achievement. Cliquez sur "Ajouter".</div>
+          <div v-for="(ach, idx) in missionForm.achievments" :key="idx" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end bg-gray-50 p-3 rounded border">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+              <input v-model="ach.name" type="text" class="w-full px-3 py-2 border border-gray-300 rounded" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">XP</label>
+              <input v-model.number="ach.experience" type="number" min="0" class="w-full px-3 py-2 border border-gray-300 rounded" />
+            </div>
+            <div class="flex justify-end">
+              <button @click="removeAchievementRow(idx)" class="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded">Retirer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Types (repeatable component) -->
+        <div v-show="missionActiveTab === 'Types'" class="space-y-3">
+          <div class="flex justify-between items-center">
+            <h4 class="font-semibold">Types</h4>
+            <button @click="addTypeRow" class="px-3 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200">+ Ajouter</button>
+          </div>
+          <div v-if="missionForm.types.length === 0" class="text-sm text-gray-500">Aucun type. Cliquez sur "Ajouter".</div>
+          <div v-for="(t, idx) in missionForm.types" :key="idx" class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end bg-gray-50 p-3 rounded border">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+              <input v-model="t.name" type="text" class="w-full px-3 py-2 border border-gray-300 rounded" />
+            </div>
+            <div class="flex justify-end">
+              <button @click="removeTypeRow(idx)" class="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded">Retirer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Résumé -->
+        <div v-show="missionActiveTab === 'Résumé'" class="space-y-2 text-sm">
+          <div><strong>Titre:</strong> {{ missionForm.title }}</div>
+          <div><strong>Description:</strong> {{ missionForm.description || '—' }}</div>
+          <div><strong>Lat/Lng:</strong> {{ missionForm.latitude || '—' }} / {{ missionForm.longitude || '—' }}</div>
+          <div><strong>Seuil:</strong> {{ missionForm.treshold ?? '—' }}</div>
+          <div><strong>Média:</strong> {{ missionForm.media?.url || '—' }}</div>
+          <div><strong>Achievments:</strong> {{ missionForm.achievments.length }}</div>
+          <div><strong>Types:</strong> {{ missionForm.types.length }}</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-3 pt-2 border-t border-gray-200">
+          <button @click="closeMissionModal" class="px-5 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50">Annuler</button>
+          <button @click="createMission" :disabled="!missionIsValid || loading" :class="missionIsValid && !loading ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'" class="px-5 py-2 rounded font-medium">
+            {{ loading ? 'Création...' : 'Créer la mission' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- Modal de confirmation de suppression -->
   <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1172,6 +1313,119 @@ const modalSpot = ref({
   description: '',
   url: ''
 })
+
+  // =========================
+  // Création d'une Mission (modal à onglets)
+  // =========================
+  const showMissionModal = ref(false)
+  const missionActiveTab = ref('Infos')
+  const missionTabs = ['Infos', 'Localisation', 'Médias', 'Achievements', 'Types', 'Résumé']
+
+  // Formulaire Mission selon le schéma fourni
+  const missionForm = ref({
+    title: '',
+    description: '',
+    latitude: null,
+    longitude: null,
+    treshold: null,
+    media: { url: '', caption: '' },
+    achievments: [],
+    types: []
+  })
+
+  const missionIsValid = computed(() => (missionForm.value.title?.trim().length || 0) >= 5)
+
+  const openMissionModal = () => {
+    resetMissionForm()
+    missionActiveTab.value = 'Infos'
+    showMissionModal.value = true
+  }
+
+  const closeMissionModal = () => {
+    showMissionModal.value = false
+  }
+
+  const resetMissionForm = () => {
+    missionForm.value = {
+      title: '',
+      description: '',
+      latitude: null,
+      longitude: null,
+      treshold: null,
+      media: { url: '', caption: '' },
+      achievments: [],
+      types: []
+    }
+  }
+
+  const addAchievementRow = () => {
+    missionForm.value.achievments.push({ name: '', experience: 0 })
+  }
+
+  const removeAchievementRow = (index) => {
+    missionForm.value.achievments.splice(index, 1)
+  }
+
+  const addTypeRow = () => {
+    missionForm.value.types.push({ name: '' })
+  }
+
+  const removeTypeRow = (index) => {
+    missionForm.value.types.splice(index, 1)
+  }
+
+  const createMission = async () => {
+    if (!missionIsValid.value) {
+      showErrorMessage("Le titre de la mission doit contenir au moins 5 caractères")
+      return
+    }
+
+    try {
+      loading.value = true
+  const { strapiAdminApi } = await import('../service/ApiService.js')
+      const payload = {
+        title: missionForm.value.title,
+        description: missionForm.value.description || '',
+        latitude: missionForm.value.latitude !== null ? parseFloat(missionForm.value.latitude) : null,
+        longitude: missionForm.value.longitude !== null ? parseFloat(missionForm.value.longitude) : null,
+        treshold: missionForm.value.treshold !== null ? parseInt(missionForm.value.treshold) : null,
+        media: missionForm.value.media?.url ? missionForm.value.media : null,
+        achievments: missionForm.value.achievments || [],
+        types: missionForm.value.types || []
+      }
+
+      const res = await strapiAdminApi.post('/content-manager/collection-types/api::mission.mission', payload)
+
+      // Extraire un id et un titre de la réponse (Strapi v4/v5, Content Manager)
+      const missionId = res?.id || res?.documentId || res?.data?.id || res?.data?.documentId || null
+      const missionTitle = res?.title || res?.name || res?.data?.title || missionForm.value.title
+
+      // Ajouter immédiatement une entrée minimale dans le formulaire de circuit pour visualiser l'association
+      if (Array.isArray(newCircuit.value.Missions)) {
+        newCircuit.value.Missions.push({
+          id: missionId,
+          documentId: missionId,
+          title: missionTitle,
+          name: missionTitle,
+          description: missionForm.value.description || '',
+          latitude: missionForm.value.latitude,
+          longitude: missionForm.value.longitude,
+          treshold: missionForm.value.treshold,
+          media: missionForm.value.media?.url ? { ...missionForm.value.media } : null,
+          achievments: missionForm.value.achievments ? [...missionForm.value.achievments] : [],
+          types: missionForm.value.types ? [...missionForm.value.types] : []
+        })
+      }
+
+      showSuccessMessage('Mission créée et ajoutée au circuit !')
+      closeMissionModal()
+    } catch (err) {
+      console.error('Erreur création mission:', err)
+      showErrorMessage(err.message || 'Erreur lors de la création de la mission')
+    } finally {
+      loading.value = false
+    }
+  }
 
 // États pour l'édition de commentaires
 const editingComment = ref(null)
