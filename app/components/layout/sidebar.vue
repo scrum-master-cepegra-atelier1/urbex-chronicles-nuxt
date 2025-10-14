@@ -1,14 +1,14 @@
 <template>
   <aside class="fixed inset-y-0 left-0 z-50 w-72 bg-[#5d5a96] text-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
     <!-- Header avec Logo et Titre -->
-    <div class="flex items-center justify-center h-16 lg:h-20 px-4">
-      <div class="flex items-center space-x-3 lg:space-x-4">
+    <div class="flex items-center justify-center h-16 lg:h-20 px-3">
+      <div class="flex items-center space-x-2 lg:space-x-4">
         <img 
           src="/images/logo.svg" 
           alt="Urbex Chronicles Logo" 
           class="h-10 w-10 lg:h-14 lg:w-14"
         />
-        <h1 class="text-xl lg:text-2xl font-bold text-white">Urbex Chronicles</h1>
+        <h1 class="text-xl lg:text-2xl font-bold text-white" style="font-family: 'Do Hyeon', sans-serif; font-size: 24px;">Urbex Chronicles</h1>
       </div>
     </div>
 
@@ -24,14 +24,13 @@
           color: isActiveRoute(item.href) ? '#ffe14d' : 'white'
         }"
       >
-        <div 
-          class="mr-3 lg:mr-4 h-5 w-5 lg:h-6 lg:w-6 flex items-center justify-center text-sm lg:text-base font-bold"
+        <UiIcon
+          :name="item.icon"
+          class="mr-3 lg:mr-4 h-5 w-5 lg:h-6 lg:w-6"
           :style="{
             color: isActiveRoute(item.href) ? '#ffe14d' : 'white'
           }"
-        >
-          {{ item.icon }}
-        </div>
+        />
         {{ item.name }}
       </NuxtLink>
     </nav>
@@ -72,54 +71,51 @@ const route = useRoute()
 // Éléments de navigation
 const navigationItems = [
   {
-    name: 'Dashboard',
+    name: 'Tableau de bord',
     href: '/',
-    icon: '📊' // Icône temporaire - sera remplacée
+    icon: 'dashboard'
   },
   {
     name: 'Utilisateurs',
     href: '/admin/utilisateurs',
-    icon: '👥' // Icône temporaire - sera remplacée
+    icon: 'users'
   },
   {
-    name: 'Spots urbex',
-    href: '/admin/spots',
-    icon: '📍' // Icône temporaire - sera remplacée
+    name: 'Circuits',
+    href: '/admin/circuits',
+    icon: 'map'
   },
   {
     name: 'Missions',
     href: '/admin/missions',
-    icon: '🎯' // Icône temporaire - sera remplacée
+    icon: 'target'
   },
   {
-    name: 'Success',
+    name: 'Succès',
     href: '/admin/success',
-    icon: '🏆' // Icône temporaire - sera remplacée
+    icon: 'trophy'
   },
   {
     name: 'Notifications',
     href: '/admin/notifications',
-    icon: '🔔' // Icône temporaire - sera remplacée
+    icon: 'bell'
   },
   {
     name: 'Tickets',
     href: '/admin/tickets',
-    icon: '🎫' // Icône temporaire - sera remplacée
+    icon: 'ticket'
   }
 ]
 
 // Fonction pour vérifier si une route est active
 const isActiveRoute = (href) => {
-  let isActive
   if (href === '/') {
     // Pour la route racine, vérifier exactement la correspondance
-    isActive = route.path === '/'
+    return route.path === '/'
   } else {
     // Pour les autres routes, utiliser la logique existante
-    isActive = route.path === href || route.path.startsWith(href + '/')
+    return route.path === href || route.path.startsWith(href + '/')
   }
-  console.log(`Route actuelle: ${route.path}, href: ${href}, active: ${isActive}`)
-  return isActive
 }
 
 // Fonction pour changer la langue

@@ -4,11 +4,11 @@
  */
 
 // Nuxt auto-imports defineNuxtRouteMiddleware & navigateTo
-import AuthService from "~/service/AuthService.js"
+import AuthService from "../service/AuthService.js"
 
 export default defineNuxtRouteMiddleware(async (_to, _from) => {
   // Only run on client (uses localStorage)
-  if (process.server) return
+  if (import.meta.server) return
 
   if (!AuthService.isAuthenticated()) {
     return navigateTo("/login")

@@ -1,0 +1,108 @@
+{
+  "insomnia_version": "4.2.0",
+  "type": "export",
+  "data": {
+    "resources": [
+      {
+        "_id": "req_circuits_create",
+        "name": "Créer Circuit - Château Abandonné",
+        "method": "POST",
+        "url": "http://localhost:1337/api/circuits",
+        "body": {
+          "mimeType": "application/json",
+          "text": "{\n  \"data\": {\n    \"name\": \"Circuit du Château de la Folie\",\n    \"description\": \"Un magnifique château du 18ème siècle abandonné depuis les années 80. Architecture gothique, escaliers en colimaçon préservés et vue panoramique depuis la tour principale.\",\n    \"duration\": 120,\n    \"like\": 25,\n    \"address\": {\n      \"street\": \"Chemin du Château Abandonné\",\n      \"city\": \"Villers-la-Ville\",\n      \"zipCode\": \"1495\",\n      \"country\": \"Belgique\"\n    },\n    \"comments\": [\n      {\n        \"author\": \"UrbanExplorer92\",\n        \"content\": \"Lieu magique ! Attention aux escaliers en bois qui grincent.\",\n        \"date\": \"2024-09-15\"\n      }\n    ]\n  }\n}"
+        },
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Authorization",
+            "value": "Bearer YOUR_STRAPI_TOKEN"
+          }
+        ]
+      },
+      {
+        "_id": "req_circuits_create_2",
+        "name": "Créer Circuit - Usine Textile",
+        "method": "POST",
+        "url": "http://localhost:1337/api/circuits",
+        "body": {
+          "mimeType": "application/json",
+          "text": "{\n  \"data\": {\n    \"name\": \"Circuit de l'Usine Textile Désaffectée\",\n    \"description\": \"Ancienne filature des années 1920 avec ses machines d'époque encore présentes. Atmosphère industrielle unique avec jeux de lumière spectaculaires.\",\n    \"duration\": 90,\n    \"like\": 18,\n    \"address\": {\n      \"street\": \"Rue de l'Industrie 45\",\n      \"city\": \"Verviers\",\n      \"zipCode\": \"4800\",\n      \"country\": \"Belgique\"\n    },\n    \"comments\": [\n      {\n        \"author\": \"PhotoUrban\",\n        \"content\": \"Parfait pour la photographie ! Les rayons de soleil à travers les fenêtres cassées sont magnifiques.\",\n        \"date\": \"2024-08-20\"\n      },\n      {\n        \"author\": \"ExploreMore\",\n        \"content\": \"Accès un peu difficile mais ça vaut le coup. Prévoir de bonnes chaussures.\",\n        \"date\": \"2024-09-01\"\n      }\n    ]\n  }\n}"
+        },
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Authorization",
+            "value": "Bearer YOUR_STRAPI_TOKEN"
+          }
+        ]
+      },
+      {
+        "_id": "req_users_create",
+        "name": "Créer Utilisateur - UrbanExplorer92",
+        "method": "POST",
+        "url": "http://localhost:1337/api/users",
+        "body": {
+          "mimeType": "application/json",
+          "text": "{\n  \"username\": \"UrbanExplorer92\",\n  \"email\": \"explorer92@urbex.be\",\n  \"password\": \"MotDePasseSecurise123!\",\n  \"profile\": {\n    \"bio\": \"Passionné d'urbex depuis 10 ans, spécialisé dans l'exploration de châteaux et manoirs abandonnés.\",\n    \"experience_level\": \"expert\",\n    \"favorite_locations\": [\"châteaux\", \"manoirs\", \"églises\"]\n  },\n  \"role\": \"authenticated\"\n}"
+        },
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Authorization",
+            "value": "Bearer YOUR_STRAPI_TOKEN"
+          }
+        ]
+      },
+      {
+        "_id": "req_missions_create",
+        "name": "Créer Mission - Photographie du Château",
+        "method": "POST",
+        "url": "http://localhost:1337/api/missions",
+        "body": {
+          "mimeType": "application/json",
+          "text": "{\n  \"data\": {\n    \"name\": \"Capture les vitraux du château\",\n    \"description\": \"Photographier les magnifiques vitraux colorés de la chapelle du château. Bonus si vous capturez les jeux de lumière à travers les verres brisés.\",\n    \"type\": \"photographie\",\n    \"difficulty\": \"moyen\",\n    \"points\": 150,\n    \"requirements\": [\n      \"Appareil photo ou smartphone\",\n      \"Accès à la chapelle (étage -1)\",\n      \"Patience pour attendre la bonne lumière\"\n    ],\n    \"rewards\": {\n      \"xp\": 150,\n      \"badge\": \"Chasseur de Lumière\"\n    }\n  }\n}"
+        },
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Authorization",
+            "value": "Bearer YOUR_STRAPI_TOKEN"
+          }
+        ]
+      },
+      {
+        "_id": "req_achievements_create",
+        "name": "Créer Succès - Premier Château",
+        "method": "POST",
+        "url": "http://localhost:1337/api/successes",
+        "body": {
+          "mimeType": "application/json",
+          "text": "{\n  \"data\": {\n    \"name\": \"Premier Château\",\n    \"description\": \"Félicitations ! Vous avez exploré votre premier château abandonné. Le début d'une grande aventure urbex.\",\n    \"icon\": \"🏰\",\n    \"type\": \"exploration\",\n    \"rarity\": \"common\",\n    \"points\": 50,\n    \"unlock_conditions\": {\n      \"circuit_type\": \"château\",\n      \"completion_count\": 1\n    }\n  }\n}"
+        },
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "name": "Authorization",
+            "value": "Bearer YOUR_STRAPI_TOKEN"
+          }
+        ]
+      }
+    ]
+  }
+}
