@@ -9,17 +9,11 @@
         <div class="p-4 sm:p-6 lg:p-8">
             <!-- Page Title -->
             <div class="mb-12 flex-shrink-0">
-                <h1 class="text-gray-900" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Support & Tickets</h1>
-
+                <h1 class="text-gray-900" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Tickets</h1>
                 <!-- Indicateur de chargement -->
                 <div v-if="loading" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div class="flex items-center">
-                        <svg class="w-5 h-5 text-blue-500 mr-2 animate-spin" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
-                            </path>
-                        </svg>
+                        <UiIcon name="refresh" size="5" class="text-blue-500 mr-2 animate-spin" />
                         <span class="text-blue-800">Chargement des tickets...</span>
                     </div>
                 </div>
@@ -27,10 +21,7 @@
                 <!-- Message de succès -->
                 <div v-if="successMessage" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                     <div class="flex items-center">
-                        <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                        </svg>
+                        <UiIcon name="check" size="5" class="text-green-500 mr-2" />
                         <span class="text-green-800">{{ successMessage }}</span>
                     </div>
                 </div>
@@ -38,10 +29,7 @@
                 <!-- Message d'erreur -->
                 <div v-if="error" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                     <div class="flex items-center">
-                        <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
+                        <UiIcon name="exclamation" size="5" class="text-red-500 mr-2" />
                         <span class="text-red-800">{{ error }}</span>
                         <button @click="refreshData"
                             class="ml-4 text-red-600 hover:text-red-800 underline">Réessayer</button>
@@ -226,49 +214,92 @@
                     <div class="mb-12">
                         <div class="flex items-center justify-between mb-6">
                             <h2 class="text-2xl font-bold text-gray-900" style="font-family: 'Do Hyeon', sans-serif;">
-                                Gestion des tickets</h2>
+                            Gestion des tickets
+                            </h2>
                             <div class="flex space-x-3">
-                                <!-- Filtres compacts -->
-                                <div class="flex items-center space-x-2">
-                                    <select v-model="filters.status"
-                                        class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                                        <option value="">Tous les statuts</option>
-                                        <option value="open">Ouvert</option>
-                                        <option value="in_progress">En cours</option>
-                                        <option value="pending">En attente</option>
-                                        <option value="resolved">Résolu</option>
-                                        <option value="closed">Fermé</option>
-                                    </select>
+                                <!-- Filtres avec overlay -->
+                                <UiFilterOverlay
+                                    page-title="les tickets"
+                                    :filters="filters"
+                                    :active-filters-count="activeFiltersCount"
+                                    @update:filters="updateFilters"
+                                    @reset="clearFilters"
+                                >
+                                    <template #default="{ filters, updateFilter }">
+                                        <!-- Recherche -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                Rechercher
+                                            </label>
+                                            <input
+                                                :value="filters.search"
+                                                @input="updateFilter('search', $event.target.value)"
+                                                type="text"
+                                                placeholder="Titre, client, description..."
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                                            />
+                                        </div>
 
-                                    <select v-model="filters.priority"
-                                        class="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
-                                        <option value="">Toutes priorités</option>
-                                        <option value="urgent">Urgente</option>
-                                        <option value="high">Élevée</option>
-                                        <option value="medium">Moyenne</option>
-                                        <option value="low">Basse</option>
-                                    </select>
+                                        <!-- Statut -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                                            <select
+                                                :value="filters.status"
+                                                @change="updateFilter('status', $event.target.value)"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                                            >
+                                                <option value="">Tous les statuts</option>
+                                                <option value="open">Ouvert</option>
+                                                <option value="in_progress">En cours</option>
+                                                <option value="pending">En attente</option>
+                                                <option value="resolved">Résolu</option>
+                                                <option value="closed">Fermé</option>
+                                            </select>
+                                        </div>
 
-                                    <div class="relative">
-                                        <input v-model="filters.search" type="text" placeholder="Rechercher..."
-                                            class="pl-8 pr-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 w-48">
-                                        <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                    </div>
-                                </div>
+                                        <!-- Priorité -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+                                            <select
+                                                :value="filters.priority"
+                                                @change="updateFilter('priority', $event.target.value)"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                                            >
+                                                <option value="">Toutes les priorités</option>
+                                                <option value="urgent">Urgente</option>
+                                                <option value="high">Élevée</option>
+                                                <option value="medium">Moyenne</option>
+                                                <option value="low">Basse</option>
+                                            </select>
+                                        </div>
 
-                                <button @click="refreshData" :disabled="loading"
-                                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-md transition-colors duration-200 flex items-center">
-                                    <svg class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                    {{ loading ? 'Chargement...' : 'Actualiser' }}
-                                </button>
+                                        <!-- Type -->
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                                            <select
+                                                :value="filters.type"
+                                                @change="updateFilter('type', $event.target.value)"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                                            >
+                                                <option value="">Tous les types</option>
+                                                <option value="bug">Bug/Problème</option>
+                                                <option value="feature">Fonctionnalité</option>
+                                                <option value="question">Question</option>
+                                                <option value="account">Compte</option>
+                                                <option value="payment">Paiement</option>
+                                                <option value="other">Autre</option>
+                                            </select>
+                                        </div>
+                                    </template>
+                                </UiFilterOverlay>
+
+                                <!-- Bouton refresh -->
+                                <UiRefreshButton 
+                                    :loading="loading" 
+                                    @click="refreshData"
+                                    variant="secondary"
+                                    size="sm"
+                                />
                             </div>
                         </div>
 
@@ -342,34 +373,18 @@
                                             <button @click="viewTicket(ticket)"
                                                 class="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1.5"
                                                 title="Voir détails">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 6 16 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
+                                                <UiIcon name="eye" size="4" />
                                             </button>
                                             <button @click="replyToTicket(ticket)"
                                                 class="text-green-600 hover:text-green-800 transition-colors duration-200 p-1.5"
                                                 title="Répondre">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                                </svg>
+                                                <UiIcon name="edit" size="4" />
                                             </button>
                                             <button v-if="ticket.status !== 'resolved' && ticket.status !== 'closed'"
                                                 @click="resolveTicket(ticket)"
                                                 class="text-purple-600 hover:text-purple-800 transition-colors duration-200 p-1.5"
                                                 title="Marquer comme résolu">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M5 13l4 4L19 7" />
-                                                </svg>
+                                                <UiIcon name="check" size="4" />
                                             </button>
                                         </div>
                                     </div>
@@ -411,25 +426,18 @@
                                                 <button @click="viewTicket(ticket)"
                                                     class="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1"
                                                     title="Voir détails">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 6 16 0z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                    </svg>
+                                                    <UiIcon name="eye" size="5" />
                                                 </button>
                                                 <button @click="replyToTicket(ticket)"
                                                     class="text-green-600 hover:text-green-800 transition-colors duration-200 p-1"
                                                     title="Répondre">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                                    </svg>
+                                                    <UiIcon name="edit" size="5" />
                                                 </button>
                                                 <button v-if="ticket.status !== 'resolved' && ticket.status !== 'closed'"
                                                     @click="resolveTicket(ticket)"
                                                     class="text-purple-600 hover:text-purple-800 transition-colors duration-200 p-1"
                                                     title="Marquer comme résolu">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                                    </svg>
+                                                    <UiIcon name="check" size="5" />
                                                 </button>
                                             </div>
                                         </div>
@@ -487,10 +495,7 @@
                         </div>
                         <button @click="showTicketModal = false"
                             class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <UiIcon name="close" size="6" />
                         </button>
                     </div>
 
@@ -848,6 +853,15 @@ const hasActiveFilters = computed(() => {
     return filters.value.search || filters.value.status || filters.value.priority || filters.value.type
 })
 
+const activeFiltersCount = computed(() => {
+    let count = 0
+    if (filters.value.search) count++
+    if (filters.value.status) count++
+    if (filters.value.priority) count++
+    if (filters.value.type) count++
+    return count
+})
+
 // Validation nouveau ticket
 const isNewTicketValid = computed(() => {
     return newTicket.value.customerName.trim() &&
@@ -979,6 +993,11 @@ const formatRelativeTime = (dateString) => {
     if (diffInHours < 48) return 'Hier'
     const diffInDays = Math.floor(diffInHours / 24)
     return `Il y a ${diffInDays} jour(s)`
+}
+
+// Fonctions pour les filtres
+const updateFilters = (newFilters) => {
+    filters.value = { ...newFilters }
 }
 
 // Actions

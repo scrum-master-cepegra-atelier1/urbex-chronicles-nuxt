@@ -14,9 +14,7 @@
         <!-- Indicateur de chargement -->
         <div v-if="loading" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div class="flex items-center">
-            <svg class="w-5 h-5 text-blue-500 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
+            <UiIcon name="refresh" size="md" class="text-blue-500 mr-2 animate-spin" />
             <span class="text-blue-800">Chargement des succès...</span>
           </div>
         </div>
@@ -24,9 +22,7 @@
         <!-- Message de succès -->
         <div v-if="successMessage" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div class="flex items-center">
-            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
+            <UiIcon name="check" size="md" class="text-green-500 mr-2" />
             <span class="text-green-800">{{ successMessage }}</span>
           </div>
         </div>
@@ -34,9 +30,7 @@
         <!-- Message d'erreur -->
         <div v-if="error" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <div class="flex items-center">
-            <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+            <UiIcon name="exclamation" size="md" class="text-red-500 mr-2" />
             <span class="text-red-800">{{ error }}</span>
             <button @click="refreshData" class="ml-4 text-red-600 hover:text-red-800 underline">Réessayer</button>
           </div>
@@ -185,9 +179,7 @@
                     :class="canCreateSuccess ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
                     class="px-8 py-3 rounded-lg transition-colors duration-200 flex items-center"
                   >
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
+                    <UiIcon name="plus" size="md" class="mr-2" />
                     Créer le succès
                   </button>
                 </div>
@@ -201,151 +193,70 @@
           <div class="flex justify-between items-center pb-6">
             <div>
               <h2 class="text-2xl font-bold text-gray-900" style="font-family: 'Do Hyeon', sans-serif;">Gestion des succès</h2>
-              <p class="text-sm text-gray-500 mt-1">
-                {{ filteredAchievements.length }} 
-                {{ filteredAchievements.length > 1 ? 'succès affichés' : 'succès affiché' }}
-                {{ achievements.length !== filteredAchievements.length ? `sur ${achievements.length} au total` : '' }}
-              </p>
             </div>
             
-            <!-- Bouton de filtrage repliable -->
-            <div class="space-y-3">
-              <!-- Bouton pour afficher/masquer les filtres -->
-              <div class="flex justify-end">
-                <button
-                  @click="showFilters = !showFilters"
-                  :class="showFilters ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-gray-50 text-gray-600 border-gray-300'"
-                  class="px-4 py-2 border rounded-lg transition-all duration-200 flex items-center hover:shadow-sm"
-                  title="Afficher/masquer les filtres"
-                >
-                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                  </svg>
-                  <span class="font-medium">Filtres</span>
-                  <svg 
-                    :class="{ 'rotate-180': showFilters }" 
-                    class="w-4 h-4 ml-2 transform transition-transform duration-200" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                  <span v-if="hasActiveFilters" class="ml-2 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {{ activeFiltersCount }}
-                  </span>
-                </button>
-              </div>
-              
-              <!-- Panel des filtres (collapsible) -->
-              <div 
-                v-show="showFilters" 
-                class="transition-all duration-300 ease-in-out"
-                :class="showFilters ? 'animate-fade-in' : ''"
+            <div class="flex justify-between items-center">
+              <!-- Filtres avec overlay -->
+              <UiFilterOverlay
+                page-title="les succès"
+                :filters="filters"
+                :active-filters-count="activeFiltersCount"
+                @update:filters="updateFilters"
+                @reset="clearFilters"
               >
-                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
-                  <!-- Ligne des filtres -->
-                  <div class="flex flex-wrap gap-3">
-                <!-- Recherche par nom -->
-                <div class="relative">
-                  <input 
-                    v-model="searchTerm"
-                    type="text"
-                    placeholder="Rechercher par nom..."
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-                    style="width: 200px;"
-                  />
-                  <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                  </svg>
-                </div>
-                
-                <!-- Filtre par statut -->
-                <div class="relative">
-                  <select 
-                    v-model="statusFilter"
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none cursor-pointer"
-                  >
-                    <option value="">Tous les statuts</option>
-                    <option value="published">Publiés</option>
-                    <option value="draft">Brouillons</option>
-                  </select>
-                  <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  <svg class="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </div>
-                
-                <!-- Filtre par expérience -->
-                <div class="relative">
-                  <select 
-                    v-model="experienceFilter"
-                    class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white appearance-none cursor-pointer"
-                  >
-                    <option value="">Toute expérience</option>
-                    <option value="low">Faible (< 100 XP)</option>
-                    <option value="medium">Moyenne (100-500 XP)</option>
-                    <option value="high">Élevée (> 500 XP)</option>
-                  </select>
-                  <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                  </svg>
-                  <svg class="absolute right-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </div>
-                
-                <!-- Bouton de reset des filtres -->
-                <button
-                  @click="resetFilters"
-                  :disabled="!hasActiveFilters"
-                  :class="hasActiveFilters ? 'bg-gray-100 hover:bg-gray-200 text-gray-700' : 'bg-gray-50 text-gray-400 cursor-not-allowed'"
-                  class="px-4 py-2 rounded-lg transition-colors duration-200 flex items-center"
-                  title="Réinitialiser les filtres"
-                >
-                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                  </svg>
-                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                  Reset
-                </button>
-              </div>
-              
-                  <!-- Badges des filtres actifs -->
-                  <div v-if="hasActiveFilters" class="flex flex-wrap gap-2 pt-3 border-t border-gray-300">
-                    <span v-if="searchTerm" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Recherche: "{{ searchTerm }}"
-                      <button @click="searchTerm = ''" class="ml-2 text-blue-600 hover:text-blue-800">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                      </button>
-                    </span>
-                    
-                    <span v-if="statusFilter" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Statut: {{ statusFilter === 'published' ? 'Publiés' : 'Brouillons' }}
-                      <button @click="statusFilter = ''" class="ml-2 text-green-600 hover:text-green-800">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                      </button>
-                    </span>
-                    
-                    <span v-if="experienceFilter" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      XP: {{ experienceFilter === 'low' ? 'Faible' : experienceFilter === 'medium' ? 'Moyenne' : 'Élevée' }}
-                      <button @click="experienceFilter = ''" class="ml-2 text-yellow-600 hover:text-yellow-800">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                      </button>
-                    </span>
+                <template #default="{ filters, updateFilter }">
+                  <!-- Recherche -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Rechercher
+                    </label>
+                    <input
+                      :value="filters.search"
+                      @input="updateFilter('search', $event.target.value)"
+                      type="text"
+                      placeholder="Nom du succès..."
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                    />
                   </div>
-                </div>
-              </div>
+
+                  <!-- Statut -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                    <select
+                      :value="filters.status"
+                      @change="updateFilter('status', $event.target.value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">Tous les statuts</option>
+                      <option value="published">Publiés</option>
+                      <option value="draft">Brouillons</option>
+                    </select>
+                  </div>
+
+                  <!-- Expérience -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Expérience</label>
+                    <select
+                      :value="filters.experience"
+                      @change="updateFilter('experience', $event.target.value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">Toute expérience</option>
+                      <option value="low">Faible (< 100 XP)</option>
+                      <option value="medium">Moyenne (100-500 XP)</option>
+                      <option value="high">Élevée (> 500 XP)</option>
+                    </select>
+                  </div>
+                </template>
+              </UiFilterOverlay>
+
+              <!-- Bouton refresh -->
+              <UiRefreshButton 
+                :loading="loading" 
+                @click="refreshData"
+                variant="secondary"
+                size="sm"
+              />
             </div>
           </div>
           
@@ -389,7 +300,6 @@
                     <div class="text-2xl flex-shrink-0">🏆</div>
                     <div class="min-w-0 flex-1">
                       <div class="text-gray-900 font-medium truncate">{{ success.name || 'N/A' }}</div>
-                      <div class="text-xs text-gray-500 truncate">ID: {{ success.documentId || success.id }}</div>
                     </div>
                   </div>
                   
@@ -432,9 +342,7 @@
                       class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
                       title="Modifier"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                      </svg>
+                      <UiIcon name="edit" size="sm" />
                     </button>
                     <button
                       @click="toggleSuccessStatus(success)"
@@ -442,19 +350,15 @@
                       class="p-2 rounded-lg transition-colors duration-200"
                       :title="success.active ? 'Mettre en brouillon' : 'Publier'"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path v-if="success.active" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                      </svg>
+                      <UiIcon v-if="success.active" name="close" size="sm" />
+                      <UiIcon v-else name="check-circle" size="sm" />
                     </button>
                     <button
                       @click="deleteSuccess(success)"
                       class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
                       title="Supprimer"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                      </svg>
+                      <UiIcon name="trash" size="sm" />
                     </button>
                   </div>
                 </div>
@@ -472,9 +376,7 @@
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-xl font-bold text-gray-900">Modifier le succès</h3>
         <button @click="showEditModal = false; editingSuccess = null" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
+          <UiIcon name="close" size="lg" />
         </button>
       </div>
       
@@ -583,10 +485,11 @@ const showEditModal = ref(false)
 const editingSuccess = ref(null)
 
 // Variables de filtrage
-const searchTerm = ref('')
-const statusFilter = ref('')
-const experienceFilter = ref('')
-const showFilters = ref(false)
+const filters = ref({
+  search: '',
+  status: '',
+  experience: ''
+})
 
 // Computed properties pour les stats
 const totalSuccesses = computed(() => stats.value.total)
@@ -600,19 +503,19 @@ const filteredAchievements = computed(() => {
   let filtered = [...achievements.value]
   
   // Filtre par nom (recherche)
-  if (searchTerm.value.trim()) {
-    const search = searchTerm.value.toLowerCase().trim()
+  if (filters.value.search.trim()) {
+    const search = filters.value.search.toLowerCase().trim()
     filtered = filtered.filter(achievement => 
       achievement.name?.toLowerCase().includes(search)
     )
   }
   
   // Filtre par statut
-  if (statusFilter.value) {
+  if (filters.value.status) {
     filtered = filtered.filter(achievement => {
-      if (statusFilter.value === 'published') {
+      if (filters.value.status === 'published') {
         return achievement.active === true
-      } else if (statusFilter.value === 'draft') {
+      } else if (filters.value.status === 'draft') {
         return achievement.active === false
       }
       return true
@@ -620,14 +523,14 @@ const filteredAchievements = computed(() => {
   }
   
   // Filtre par expérience
-  if (experienceFilter.value) {
+  if (filters.value.experience) {
     filtered = filtered.filter(achievement => {
       const xp = achievement.experience || 0
-      if (experienceFilter.value === 'low') {
+      if (filters.value.experience === 'low') {
         return xp < 100
-      } else if (experienceFilter.value === 'medium') {
+      } else if (filters.value.experience === 'medium') {
         return xp >= 100 && xp <= 500
-      } else if (experienceFilter.value === 'high') {
+      } else if (filters.value.experience === 'high') {
         return xp > 500
       }
       return true
@@ -639,17 +542,17 @@ const filteredAchievements = computed(() => {
 
 // Computed property pour détecter si des filtres sont actifs
 const hasActiveFilters = computed(() => {
-  return searchTerm.value.trim() !== '' || 
-         statusFilter.value !== '' || 
-         experienceFilter.value !== ''
+  return filters.value.search.trim() !== '' || 
+         filters.value.status !== '' || 
+         filters.value.experience !== ''
 })
 
 // Computed property pour compter les filtres actifs
 const activeFiltersCount = computed(() => {
   let count = 0
-  if (searchTerm.value.trim() !== '') count++
-  if (statusFilter.value !== '') count++
-  if (experienceFilter.value !== '') count++
+  if (filters.value.search.trim() !== '') count++
+  if (filters.value.status !== '') count++
+  if (filters.value.experience !== '') count++
   return count
 })
 
@@ -762,10 +665,21 @@ const clearForm = () => {
   showAddForm.value = false
 }
 
+// Fonctions pour les filtres
+const updateFilters = (newFilters) => {
+  filters.value = { ...newFilters }
+}
+
+const clearFilters = () => {
+  filters.value = {
+    search: '',
+    status: '',
+    experience: ''
+  }
+}
+
 const resetFilters = () => {
-  searchTerm.value = ''
-  statusFilter.value = ''
-  experienceFilter.value = ''
+  clearFilters()
 }
 
 // Fonction pour formater les nombres correctement

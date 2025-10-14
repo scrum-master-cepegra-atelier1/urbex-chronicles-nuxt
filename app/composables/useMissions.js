@@ -16,11 +16,17 @@ export default async function useMissions() {
 
   // Computed properties pour les statistiques
   const totalMissions = computed(() => missions.value.length)
+  
   const publishedMissions = computed(() => 
-    missions.value.filter(mission => mission.published === true).length
+    missions.value.filter(mission => mission.status === 'published').length
   )
+  
   const draftMissions = computed(() => 
-    missions.value.filter(mission => mission.published === false).length
+    missions.value.filter(mission => mission.status === 'draft').length
+  )
+  
+  const modifiedMissions = computed(() => 
+    missions.value.filter(mission => mission.status === 'modified').length
   )
 
   /**
@@ -29,46 +35,73 @@ export default async function useMissions() {
   const fetchMissions = async () => {
     loading.value = true
     error.value = null
-    
     try {
       const { strapiAdminApi } = await import('../service/ApiService.js')
-      
       console.log('🔄 Récupération des missions depuis Strapi...')
-      
-      // Récupérer les missions directement depuis la collection mission
+      // Récupérer les missions directement depuis la collection mission (API admin)
       const response = await strapiAdminApi.get('/content-manager/collection-types/api::mission.mission?page=1&pageSize=100')
-      
       if (response && response.results) {
-        missions.value = response.results.map(mission => ({
-          id: mission.id,
-          documentId: mission.documentId,
-          title: mission.title || mission.name || 'Mission sans titre',
-          description: mission.description || '',
-          latitude: mission.latitude || null,
-          longitude: mission.longitude || null,
-          address: mission.address || '',
-          type: mission.type || 'exploration',
-          difficulty: mission.difficulty || 'moyen',
-          instructions: mission.instructions || '',
-          published: mission.publishedAt != null,
-          publishedAt: mission.publishedAt,
-          createdAt: mission.createdAt,
-          updatedAt: mission.updatedAt
-        }))
-        
-        console.log(`✅ ${response.results.length} missions récupérées avec succès`)
-        console.log('🔍 Structure d\'une mission:', response.results[0])
+        console.log('🔍 DEBUG - Réponse Strapi brute (première mission):', response.results[0])
+        console.log('🔍 DEBUG - publishedAt:', response.results[0]?.publishedAt)
+        console.log('🔍 DEBUG - updatedAt:', response.results[0]?.updatedAt)
+        console.log('🔍 DEBUG - publishedAt type:', typeof response.results[0]?.publishedAt)
+        missions.value = response.results.map(mission => {
+          const hasPublishedAt = mission.publishedAt != null && mission.publishedAt !== ''
+          const publishedDate = hasPublishedAt ? new Date(mission.publishedAt) : null
+          const updatedDate = mission.updatedAt ? new Date(mission.updatedAt) : null
+          const timeDiffSeconds = publishedDate && updatedDate 
+            ? (updatedDate.getTime() - publishedDate.getTime()) / 1000 
+            : 0
+          const isModified = timeDiffSeconds > 1
+          console.log(`📋 Mission "${mission.title}":`, {
+            publishedAt: mission.publishedAt,
+            updatedAt: mission.updatedAt,
+            hasPublishedAt,
+            publishedDate: publishedDate?.toISOString(),
+            updatedDate: updatedDate?.toISOString(),
+            timeDiffSeconds: timeDiffSeconds.toFixed(2),
+            isModified,
+            calculatedStatus: !hasPublishedAt ? 'draft' : (isModified ? 'modified' : 'published')
+          })
+          return {
+            // Identifiants
+            id: mission.id,
+            documentId: mission.documentId,
+            // Champs requis du schema
+            title: mission.title || mission.name || 'Mission sans titre',
+            description: mission.description || '',
+            latitude: mission.latitude || null,
+            longitude: mission.longitude || null,
+            threshold: mission.threshold || null,
+            // Champs optionnels du schema
+            hint: mission.hint || null,
+            media: mission.media || null,
+            achievement: mission.achievement || null,
+            circuit: mission.circuit || null,
+            // Champs legacy (pour compatibilité)
+            address: mission.address || '',
+            type: mission.type || 'exploration',
+            difficulty: mission.difficulty || 'moyen',
+            instructions: mission.instructions || '',
+            // Métadonnées
+            published: hasPublishedAt,
+            publishedAt: mission.publishedAt,
+            createdAt: mission.createdAt,
+            updatedAt: mission.updatedAt,
+            // Calculer le statut Strapi v5 avec tolérance d'1 seconde
+            status: !hasPublishedAt ? 'draft' : (isModified ? 'modified' : 'published')
+          }
+        })
+        console.log(`✅ ${missions.value.length} missions récupérées avec succès`)
+        console.log('🔍 Structure d\'une mission:', missions.value[0])
       } else {
         console.warn('⚠️ Structure de réponse inattendue:', response)
         missions.value = []
       }
-      
       error.value = null
-      
     } catch (err) {
       console.error('❌ Erreur lors de la récupération des missions:', err)
       error.value = `Erreur de connexion à Strapi: ${err.message}`
-      
       // Message d'aide pour le développement
       if (err.message.includes('ERR_CONNECTION_REFUSED')) {
         error.value = 'Impossible de se connecter à Strapi. Vérifiez que Strapi est démarré sur localhost:1337'
@@ -79,8 +112,6 @@ export default async function useMissions() {
       } else if (err.message.includes('401')) {
         error.value = 'Token d\'authentification manquant ou expiré. Reconnectez-vous à l\'administration'
       }
-      
-      // Pas de données de fallback - on veut voir l'erreur en développement
       missions.value = []
     } finally {
       loading.value = false
@@ -126,6 +157,11 @@ export default async function useMissions() {
           description: missionData.description,
           latitude: missionData.latitude,
           longitude: missionData.longitude,
+          threshold: missionData.threshold,
+          hint: missionData.hint || null,
+          media: missionData.media || null,
+          achievement: missionData.achievement || null,
+          // Legacy fields
           type: missionData.type || 'exploration',
           difficulty: missionData.difficulty || 'moyen',
           instructions: missionData.instructions || ''
@@ -157,22 +193,46 @@ export default async function useMissions() {
    */
   const updateMission = async (missionId, missionData) => {
     try {
+      console.log('🔍 useMissions - updateMission appelé avec:', {
+        missionId,
+        missionData,
+        url: `/content-manager/collection-types/api::mission.mission/${missionId}`
+      })
+      
       const { strapiAdminApi } = await import('../service/ApiService.js')
       
+      // IMPORTANT : Strapi Content Manager API attend les données dans un objet { data: {...} }
+      const payload = missionData
+      
+      console.log('📦 useMissions - Payload envoyé:', payload)
+      
       // Utiliser documentId pour les opérations individuelles
-      const response = await strapiAdminApi.put(`/content-manager/collection-types/api::mission.mission/${missionId}`, missionData)
+      const response = await strapiAdminApi.put(`/content-manager/collection-types/api::mission.mission/${missionId}`, payload)
+      
+      console.log('📡 useMissions - Réponse de Strapi:', response)
       
       // Mettre à jour dans la liste locale en utilisant documentId
       const index = missions.value.findIndex(mission => mission.documentId === missionId || mission.id === missionId)
+      console.log('🔎 useMissions - Index trouvé dans la liste locale:', index)
+      
       if (index !== -1) {
-        missions.value[index] = response.data || response
+        // Fusionner les nouvelles données avec l'objet existant pour garder tous les champs
+        missions.value[index] = { ...missions.value[index], ...(response.data || response) }
+        console.log('✅ useMissions - Mission mise à jour dans la liste locale:', missions.value[index])
+      } else {
+        console.warn('⚠️ useMissions - Mission non trouvée dans la liste locale')
       }
       
       console.log(`✅ Mission ${missionId} mise à jour avec succès`)
       return response.data || response
       
     } catch (err) {
-      console.error(`❌ Erreur lors de la mise à jour de la mission ${missionId}:`, err)
+      console.error(`❌ useMissions - Erreur lors de la mise à jour de la mission ${missionId}:`, {
+        message: err.message,
+        response: err.response,
+        status: err.response?.status,
+        data: err.response?.data
+      })
       error.value = `Impossible de mettre à jour la mission: ${err.message}`
       throw err
     }
@@ -208,6 +268,66 @@ export default async function useMissions() {
       } else {
         throw new Error('Erreur lors de la suppression de la mission. Veuillez réessayer.')
       }
+    }
+  }
+
+  /**
+   * Publier une mission (Strapi v5 Draft & Publish)
+   */
+  const publishMission = async (missionId) => {
+    try {
+      const { strapiAdminApi } = await import('../service/ApiService.js')
+      
+      console.log(`📢 Publication de la mission ${missionId}...`)
+      
+      // Endpoint Strapi v5 pour publier
+      const response = await strapiAdminApi.post(`/content-manager/collection-types/api::mission.mission/${missionId}/actions/publish`, {})
+      
+      console.log(`✅ Mission ${missionId} publiée avec succès`)
+      
+      // Mettre à jour dans la liste locale
+      const index = missions.value.findIndex(mission => mission.documentId === missionId || mission.id === missionId)
+      if (index !== -1) {
+        missions.value[index].publishedAt = new Date().toISOString()
+        missions.value[index].published = true
+      }
+      
+      return response.data || response
+      
+    } catch (err) {
+      console.error(`❌ Erreur lors de la publication de la mission ${missionId}:`, err)
+      error.value = `Impossible de publier la mission: ${err.message}`
+      throw err
+    }
+  }
+
+  /**
+   * Dépublier une mission (Strapi v5 Draft & Publish)
+   */
+  const unpublishMission = async (missionId) => {
+    try {
+      const { strapiAdminApi } = await import('../service/ApiService.js')
+      
+      console.log(`📝 Dépublication de la mission ${missionId}...`)
+      
+      // Endpoint Strapi v5 pour dépublier
+      const response = await strapiAdminApi.post(`/content-manager/collection-types/api::mission.mission/${missionId}/actions/unpublish`, {})
+      
+      console.log(`✅ Mission ${missionId} dépubliée avec succès`)
+      
+      // Mettre à jour dans la liste locale
+      const index = missions.value.findIndex(mission => mission.documentId === missionId || mission.id === missionId)
+      if (index !== -1) {
+        missions.value[index].publishedAt = null
+        missions.value[index].published = false
+      }
+      
+      return response.data || response
+      
+    } catch (err) {
+      console.error(`❌ Erreur lors de la dépublication de la mission ${missionId}:`, err)
+      error.value = `Impossible de dépublier la mission: ${err.message}`
+      throw err
     }
   }
 
@@ -280,11 +400,30 @@ export default async function useMissions() {
     return mission?.publishedAt != null
   }
 
+  // Helper pour déterminer le statut Strapi v5 (draft, published, modified)
+  const getMissionStatus = (mission) => {
+    if (!mission.publishedAt) {
+      return 'draft' // Brouillon
+    }
+    
+    // Comparer les dates pour détecter les modifications
+    const publishedDate = new Date(mission.publishedAt)
+    const updatedDate = new Date(mission.updatedAt)
+    
+    // Si updatedAt > publishedAt, il y a des modifications non publiées
+    if (updatedDate > publishedDate) {
+      return 'modified' // Publié avec modifications
+    }
+    
+    return 'published' // Publié
+  }
+
   // Helper pour ajouter une propriété published calculée
   const addPublishedProperty = (mission) => {
     return {
       ...mission,
-      published: isPublished(mission)
+      published: isPublished(mission),
+      status: getMissionStatus(mission)
     }
   }
 
@@ -299,6 +438,7 @@ export default async function useMissions() {
     totalMissions,
     publishedMissions,
     draftMissions,
+    modifiedMissions,
     
     // Actions
     fetchMissions,
@@ -306,6 +446,8 @@ export default async function useMissions() {
     createMission,
     updateMission,
     deleteMission,
+    publishMission,
+    unpublishMission,
     searchMissions,
     testConnection,
     toggleMissionStatus,
@@ -314,6 +456,7 @@ export default async function useMissions() {
     formatDate,
     formatCoordinates,
     isPublished,
+    getMissionStatus,
     addPublishedProperty
   }
 }

@@ -11,24 +11,22 @@
       <div class="mb-12 flex-shrink-0">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-gray-900 mb-2" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Dashboard</h1>
+            <h1 class="text-gray-900 mb-2" style="font-family: 'Do Hyeon', sans-serif; font-size: 36px;">Tableau de bord</h1>
           </div>
           
           <!-- Actions -->
           <div class="flex items-center space-x-3">
-            <button 
-              @click="handleRefresh" 
-              :disabled="refreshing || isLoading"
-              class="flex items-center px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors duration-200 disabled:opacity-50"
-            >
-              <svg class="w-4 h-4 mr-2" :class="{ 'animate-spin': refreshing || isLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-              </svg>
-              {{ refreshing ? 'Actualisation...' : 'Actualiser' }}
-            </button>
-            <br>
-            <span class="text-xs text-gray-400">• Dernière mise à jour: {{ formatLastUpdated }}</span>
-
+            <UiRefreshButton
+              @click="handleRefresh"
+              :loading="refreshing || isLoading"
+              variant="secondary"
+              size="md"
+            />
+            <UiLastUpdated 
+              :last-updated="dashboardData?.lastUpdated"
+              size="xs"
+              variant="muted"
+            />
           </div>
         </div>
         
@@ -65,7 +63,7 @@
                       <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3" style="font-family: 'Freeman', sans-serif;">
                         {{ isLoading ? '...' : stats.activeSpots }}
                       </div>
-                      <div class="text-base lg:text-lg text-gray-600 leading-tight">Circuits<br>actifs</div>
+                      <div class="text-base lg:text-lg text-gray-600 leading-tight">Circuits<br>disponibles</div>
                     </div>
                     <div class="text-xs text-blue-600 mt-4 flex items-center">
                       <span>Gérer</span>
@@ -175,12 +173,12 @@ import { onMounted, ref, computed } from 'vue'
 
 // Meta de la page
 definePageMeta({
-  title: 'Dashboard'
+  title: 'Tableau de bord'
 })
 
 // Head configuration
 useHead({
-  title: 'Dashboard - Urbex Chronicles',
+  title: 'Tableau de bord - Urbex Chronicles',
   link: [
     {
       rel: 'preconnect',
@@ -204,13 +202,27 @@ const dashboardLoading = ref(true)
 const dashboardError = ref(null)
 
 // Computed properties basées sur les données du dashboard
-const stats = computed(() => dashboardData.value?.stats || {
-  activeSpots: 0,
-  activeMissions: 0,
-  activeNotifications: 0,
-  onlineUsers: 0,
-  totalXp: 0,
-  tickets: 0
+const stats = computed(() => {
+  if (!dashboardData.value?.stats) {
+    return {
+      activeSpots: 0,
+      activeMissions: 0,
+      activeNotifications: 0,
+      onlineUsers: 0,
+      totalXp: 0,
+      tickets: 0
+    }
+  }
+  
+  const dashStats = dashboardData.value.stats
+  return {
+    activeSpots: dashStats.totalCircuits || 0,
+    activeMissions: dashStats.publishedMissions || 0,
+    activeNotifications: dashStats.activeNotifications || 0,
+    onlineUsers: dashStats.totalUsers || 0,
+    totalXp: dashStats.totalXp || 0,
+    tickets: dashStats.openTickets || 0
+  }
 })
 
 const isLoading = computed(() => 
@@ -231,12 +243,18 @@ const initializeDashboard = async () => {
     dashboardLoading.value = true
     dashboardError.value = null
     
+    console.log('🚀 Initialisation du dashboard...')
+    
     // Initialiser le composable de manière asynchrone
     const dashboard = await useDashboard()
     dashboardData.value = dashboard
     
+    console.log('📊 Dashboard composable initialisé:', dashboard)
+    
     // Charger les données initiales
     await dashboard.fetchDashboardData()
+    
+    console.log('📈 Statistiques calculées:', dashboard.stats.value)
     
   } catch (error) {
     console.error('❌ Erreur d\'initialisation du dashboard:', error)

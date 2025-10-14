@@ -16,7 +16,7 @@ export const useCircuits = () => {
   // Computed properties pour les statistiques
   const totalCircuits = computed(() => circuits.value.length)
   const activeCircuits = computed(() => 
-    circuits.value.filter(circuit => circuit.published === true || circuit.actif === true).length
+    circuits.value.filter(circuit => circuit.publishedAt !== null && circuit.publishedAt !== undefined).length
   )
   const newCircuitsSuggested = computed(() => {
     // Calculer les nouveaux circuits des 7 derniers jours
@@ -114,9 +114,11 @@ export const useCircuits = () => {
         description: circuitData.description || '',
         duration: circuitData.duration ? parseInt(circuitData.duration) : null,
         like: circuitData.like ? parseInt(circuitData.like) : 0,
-        address: circuitData.address || null,
-        Missions: circuitData.Missions || [],
-        comments: circuitData.comments || []
+        thumbnail: circuitData.thumbnail || null,
+        missions: circuitData.missions || [],
+        comments: circuitData.comments || [],
+        accessibilities: circuitData.accessibilities || [],
+        achievement: circuitData.achievement || null
       }
       
       // Supprimer les champs null/undefined
@@ -160,9 +162,11 @@ export const useCircuits = () => {
         description: circuitData.description,
         duration: circuitData.duration ? parseInt(circuitData.duration) : null,
         like: circuitData.like ? parseInt(circuitData.like) : null,
-        address: circuitData.address || null,
-        Missions: circuitData.Missions || null,
-        comments: circuitData.comments || null
+        thumbnail: circuitData.thumbnail || null,
+        missions: circuitData.missions || null,
+        comments: circuitData.comments || null,
+        accessibilities: circuitData.accessibilities || null,
+        achievement: circuitData.achievement || null
       }
       
       // Supprimer les champs null/undefined
