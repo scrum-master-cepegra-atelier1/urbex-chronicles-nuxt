@@ -166,8 +166,14 @@ export const useCircuits = () => {
       const validCircuitData = {
         name: circuitData.name,
         description: circuitData.description || null,
-        duration: circuitData.duration !== undefined && circuitData.duration !== null ? parseInt(circuitData.duration) : null,
-        like: circuitData.like !== undefined && circuitData.like !== null ? parseInt(circuitData.like) : 0,
+        duration:
+          circuitData.duration !== undefined && circuitData.duration !== null
+            ? parseInt(circuitData.duration)
+            : null,
+        like:
+          circuitData.like !== undefined && circuitData.like !== null
+            ? parseInt(circuitData.like)
+            : 0,
         thumbnail: circuitData.thumbnail || null,
         achievement_id: circuitData.achievement_id || null,
         accessibility_ids: circuitData.accessibility_ids || [],
@@ -177,8 +183,8 @@ export const useCircuits = () => {
       console.log("📋 Données validées pour Laravel:", validCircuitData);
       console.log("🔍 Détails de l'envoi:", {
         url: `/admin/circuits/${circuitId}`,
-        method: 'PUT',
-        data: JSON.stringify(validCircuitData, null, 2)
+        method: "PUT",
+        data: JSON.stringify(validCircuitData, null, 2),
       });
 
       // Utiliser la route Laravel PUT
