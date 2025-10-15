@@ -124,9 +124,9 @@ const fetchUserData = async () => {
       return
     }
 
-    // Récupérer les données depuis localStorage
-    const token = localStorage.getItem('strapi_admin_token')
-    const userDataRaw = localStorage.getItem('strapi_admin_user')
+    // Récupérer les données depuis localStorage (Laravel)
+    const token = localStorage.getItem('laravel_admin_token')
+    const userDataRaw = localStorage.getItem('laravel_admin_user')
     
     if (!token || !userDataRaw) {
       console.warn('Aucune donnée d\'authentification trouvée')
@@ -184,11 +184,11 @@ const goToSettings = () => {
 const logout = async () => {
   isUserMenuOpen.value = false
   try {
-    // Nettoyer le localStorage (comme le fait AuthService)
+    // Nettoyer le localStorage (Laravel)
     if (process.client) {
-      localStorage.removeItem('strapi_admin_token')
-      localStorage.removeItem('strapi_admin_user') 
-      localStorage.removeItem('strapi_admin_token_expiry')
+      localStorage.removeItem('laravel_admin_token')
+      localStorage.removeItem('laravel_admin_user') 
+      localStorage.removeItem('laravel_admin_token_expiry')
     }
     console.log('Déconnexion réussie')
     await router.push('/login')

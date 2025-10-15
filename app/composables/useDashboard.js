@@ -18,30 +18,34 @@ export default async function useDashboard() {
   // Statistiques calculées dynamiquement avec vérifications de sécurité
   const stats = computed(() => {
     const circuitsValue = circuits?.totalCircuits?.value || 0
+    const activeCircuitsValue = circuits?.activeCircuits?.value || 0
     const missionsValue = missions?.publishedMissions?.value || 0
     const usersValue = users?.totalUsers?.value || 0
     const totalMissionsValue = missions?.totalMissions?.value || 0
+    
+    // Calculer l'XP total depuis l'expérience de tous les utilisateurs
+    const totalXpValue = users?.users?.value?.reduce((total, user) => total + (Number(user.experience) || 0), 0) || 0
 
     return {
-      // Circuits actifs (publiés)
-      activeSpots: circuitsValue,
+      // Circuits actifs (publiés) - priorité aux circuits actifs si disponible
+      totalCircuits: circuitsValue,
+      activeCircuits: activeCircuitsValue,
       
       // Missions en cours (publiées)
-      activeMissions: missionsValue,
+      publishedMissions: missionsValue,
+      totalMissions: totalMissionsValue,
       
       // Nouvelles notifications (missions récentes + circuits récents)
-      activeNotifications: (totalMissionsValue > 0 && circuitsValue > 0) 
-        ? Math.floor(Math.random() * 5) + 1 // Simulé pour l'instant
-        : 0,
+      activeNotifications: Math.min(totalMissionsValue + circuitsValue, 10), // Limité à 10
       
       // Utilisateurs total
-      onlineUsers: usersValue,
+      totalUsers: usersValue,
       
-      // XP total (calculé depuis les missions) - valeur simple
-      totalXp: totalMissionsValue * 100 * 50 + 1000000,
+      // XP total (calculé depuis l'expérience cumulée de tous les utilisateurs)
+      totalXp: totalXpValue,
       
-      // Tickets (simulé, peut être remplacé par une vraie collection)
-      tickets: Math.floor(Math.random() * 3)
+      // Tickets ouverts (simulé - peut être remplacé par une vraie collection)
+      openTickets: Math.floor(Math.random() * 8) + 2 // Entre 2-9 tickets
     }
   })
 

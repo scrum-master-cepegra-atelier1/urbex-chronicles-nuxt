@@ -14,9 +14,7 @@
         <!-- Indicateur de chargement -->
         <div v-if="loading" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div class="flex items-center">
-            <svg class="w-5 h-5 text-blue-500 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
+            <UiIcon name="refresh" size="5" class="text-blue-500 mr-2 animate-spin" />
             <span class="text-blue-800">Chargement des notifications...</span>
           </div>
         </div>
@@ -24,9 +22,7 @@
         <!-- Message de succès -->
         <div v-if="successMessage" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div class="flex items-center">
-            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
+            <UiIcon name="check" size="5" class="text-green-500 mr-2" />
             <span class="text-green-800">{{ successMessage }}</span>
           </div>
         </div>
@@ -34,9 +30,7 @@
         <!-- Message d'erreur -->
         <div v-if="error" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <div class="flex items-center">
-            <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
+            <UiIcon name="exclamation" size="5" class="text-red-500 mr-2" />
             <span class="text-red-800">{{ error }}</span>
             <button @click="refreshData" class="ml-4 text-red-600 hover:text-red-800 underline">Réessayer</button>
           </div>
@@ -423,35 +417,104 @@
             <h2 class="text-2xl font-bold text-gray-900" style="font-family: 'Do Hyeon', sans-serif;">
               Historique des notifications
             </h2>
-            <div class="flex space-x-3">
-              <button
-                @click="refreshData"
-                :disabled="loading"
-                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200 flex items-center"
+            <div class="flex items-center space-x-3">
+              <!-- Filtres avec overlay -->
+              <UiFilterOverlay
+                page-title="les notifications"
+                :filters="filters"
+                :active-filters-count="activeFiltersCount"
+                @update:filters="updateFilters"
+                @reset="clearFilters"
               >
-                <svg class="w-4 h-4 mr-2" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                {{ loading ? 'Chargement...' : 'Actualiser' }}
-              </button>
+                <template #default="{ filters, updateFilter }">
+                  <!-- Recherche -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Rechercher
+                    </label>
+                    <input
+                      :value="filters.search"
+                      @input="updateFilter('search', $event.target.value)"
+                      type="text"
+                      placeholder="Titre, message..."
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                    />
+                  </div>
+
+                  <!-- Type -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                    <select
+                      :value="filters.type"
+                      @change="updateFilter('type', $event.target.value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      <option value="">Tous les types</option>
+                      <option value="info">Information</option>
+                      <option value="mission">Mission</option>
+                      <option value="achievement">Succès</option>
+                      <option value="update">Mise à jour</option>
+                      <option value="event">Événement</option>
+                      <option value="reminder">Rappel</option>
+                    </select>
+                  </div>
+
+                  <!-- Statut -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                    <select
+                      :value="filters.status"
+                      @change="updateFilter('status', $event.target.value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      <option value="">Tous les statuts</option>
+                      <option value="sent">Envoyée</option>
+                      <option value="scheduled">Programmée</option>
+                      <option value="draft">Brouillon</option>
+                    </select>
+                  </div>
+
+                  <!-- Priorité -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Priorité</label>
+                    <select
+                      :value="filters.priority"
+                      @change="updateFilter('priority', $event.target.value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      <option value="">Toutes les priorités</option>
+                      <option value="low">Basse</option>
+                      <option value="normal">Normale</option>
+                      <option value="high">Élevée</option>
+                      <option value="urgent">Urgente</option>
+                    </select>
+                  </div>
+                </template>
+              </UiFilterOverlay>
+
+              <!-- Bouton refresh -->
+              <UiRefreshButton 
+                :loading="loading" 
+                @click="refreshData"
+                variant="secondary"
+                size="sm"
+              />
             </div>
           </div>
 
+
+
           <!-- Message si aucune notification -->
-          <div v-if="!loading && notifications.length === 0" class="mb-4 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div v-if="!loading && filteredNotifications.length === 0" class="mb-4 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div class="text-center">
-              <svg class="w-12 h-12 mx-auto text-yellow-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4.021 15.479l1.414-1.414L9.021 18.65l-1.414 1.414L4.021 15.479z"/>
-              </svg>
+              <UiIcon name="bell" size="12" class="mx-auto text-yellow-400 mb-3" />
               <h3 class="text-lg font-medium text-yellow-800 mb-1">Aucune notification trouvée</h3>
               <p class="text-yellow-700">
-                Aucune notification n'a encore été créée.
-                <br>Utilisez le formulaire ci-dessus pour envoyer votre première notification.
+                {{ hasActiveFilters ? 'Aucune notification ne correspond à vos critères.' : 'Aucune notification n\'a encore été créée.' }}
+                <br>{{ !hasActiveFilters ? 'Utilisez le formulaire ci-dessus pour envoyer votre première notification.' : '' }}
               </p>
             </div>
-          </div>
-          
-          <!-- Loading skeleton -->
+          </div>          <!-- Loading skeleton -->
           <div v-if="loading" class="space-y-4">
             <div v-for="n in 3" :key="n" class="bg-white rounded-xl p-6 border border-gray-200 animate-pulse">
               <div class="flex items-start justify-between">
@@ -471,7 +534,7 @@
           <!-- Notifications Cards -->
           <div v-else class="space-y-4">
             <div 
-              v-for="notification in notifications" 
+              v-for="notification in filteredNotifications" 
               :key="notification.id"
               class="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-md transition-all duration-300 hover:border-gray-300"
             >
@@ -523,7 +586,7 @@
                       class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-all duration-200"
                       title="Voir détails"
                     >
-                      👁️
+                      <UiIcon name="eye" size="4" />
                     </button>
                     <button
                       v-if="notification.status === 'draft'"
@@ -531,14 +594,14 @@
                       class="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-all duration-200"
                       title="Modifier"
                     >
-                      ✏️
+                      <UiIcon name="edit" size="4" />
                     </button>
                     <button
                       @click="deleteNotification(notification.id)"
                       class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-all duration-200"
                       title="Supprimer"
                     >
-                      🗑️
+                      <UiIcon name="trash" size="4" />
                     </button>
                   </div>
                 </div>
@@ -567,23 +630,7 @@
               </div>
             </div>
             
-            <!-- Message vide avec style plus naturel -->
-            <div v-if="notifications.length === 0" 
-                 class="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 mt-4">
-              <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                🔔
-              </div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">Aucune notification pour le moment</h3>
-              <p class="text-gray-600 mb-6 max-w-md mx-auto">
-                Commencez par créer votre première notification pour engager votre communauté d'explorateurs urbains.
-              </p>
-              <button
-                @click="activeTab = 'create'"
-                class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:shadow-md"
-              >
-                ✨ Créer une notification
-              </button>
-            </div>
+
           </div>
         </div>
         
@@ -598,9 +645,7 @@
       <div class="flex justify-between items-center mb-6">
         <h3 class="text-xl font-bold text-gray-900">Prévisualisation</h3>
         <button @click="showPreviewModal = false" class="text-gray-400 hover:text-gray-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
+          <UiIcon name="close" size="6" />
         </button>
       </div>
       
@@ -683,6 +728,7 @@ const error = ref('')
 const successMessage = ref('')
 const showAddForm = ref(false)
 const showPreviewModal = ref(false)
+
 
 // Gestion des onglets
 const activeTab = ref('content')
@@ -791,6 +837,28 @@ const estimatedRecipients = computed(() => {
       return ids.length
     default: return 0
   }
+})
+
+// Filters state
+const filters = ref({
+  search: '',
+  type: '',
+  status: '',
+  priority: ''
+})
+
+// Computed pour les filtres actifs  
+const hasActiveFilters = computed(() => {
+  return filters.value.search || filters.value.type || filters.value.status || filters.value.priority
+})
+
+const activeFiltersCount = computed(() => {
+  let count = 0
+  if (filters.value.search) count++
+  if (filters.value.type) count++
+  if (filters.value.status) count++
+  if (filters.value.priority) count++
+  return count
 })
 
 // Fonctions utilitaires
@@ -988,6 +1056,48 @@ const viewNotification = (notification) => {
 const editNotification = (notification) => {
   console.log('Modifier notification:', notification)
   // Ici on pourrait remplir le formulaire avec les données de la notification
+}
+
+// Notifications filtrées
+const filteredNotifications = computed(() => {
+  let filtered = notifications.value
+
+  if (filters.value.search) {
+    const search = filters.value.search.toLowerCase()
+    filtered = filtered.filter(notification =>
+      notification.title.toLowerCase().includes(search) ||
+      notification.message.toLowerCase().includes(search)
+    )
+  }
+
+  if (filters.value.type) {
+    filtered = filtered.filter(notification => notification.type === filters.value.type)
+  }
+
+  if (filters.value.status) {
+    filtered = filtered.filter(notification => notification.status === filters.value.status)
+  }
+
+  if (filters.value.priority) {
+    filtered = filtered.filter(notification => notification.priority === filters.value.priority)
+  }
+
+  return filtered
+})
+
+// Update filters function for UiFilterOverlay
+const updateFilters = (newFilters) => {
+  filters.value = { ...newFilters }
+}
+
+// Clear filters
+const clearFilters = () => {
+  filters.value = {
+    search: '',
+    type: '',
+    status: '',
+    priority: ''
+  }
 }
 
 const deleteNotification = async (notificationId) => {
