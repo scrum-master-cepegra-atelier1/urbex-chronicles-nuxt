@@ -26,3 +26,5 @@ logs
 
 # DOCS for developers
 .github/*
+
+API_ROUTES.md

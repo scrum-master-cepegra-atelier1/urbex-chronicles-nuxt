@@ -536,13 +536,16 @@ const formatExperience = (experience) => {
 
 const getRoleVariant = (role) => {
   if (!role) return 'default'
-  switch (role.name?.toLowerCase()) {
+  const roleValue = typeof role === 'string' ? role : role.name;
+  switch (roleValue?.toLowerCase()) {
     case 'admin':
+    case 'superadmin':
     case 'super admin':
       return 'danger'
     case 'moderator':
     case 'moderateur':
       return 'warning'
+    case 'user':
     case 'authenticated':
       return 'success'
     default:
@@ -552,18 +555,21 @@ const getRoleVariant = (role) => {
 
 const getRoleLabel = (role) => {
   if (!role) return 'Aucun rôle'
-  switch (role.name?.toLowerCase()) {
+  const roleValue = typeof role === 'string' ? role : role.name;
+  switch (roleValue?.toLowerCase()) {
     case 'admin':
       return 'Admin'
+    case 'superadmin':
     case 'super admin':
       return 'Super Admin'
     case 'moderator':
     case 'moderateur':
       return 'Modérateur'
+    case 'user':
     case 'authenticated':
       return 'Utilisateur'
     default:
-      return role.name || 'Inconnu'
+      return roleValue || 'Inconnu'
   }
 }
 

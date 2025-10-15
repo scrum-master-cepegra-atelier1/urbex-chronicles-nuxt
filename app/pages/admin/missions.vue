@@ -460,9 +460,9 @@
             <div class="mt-2 text-sm">
               <p><strong>Solutions possibles :</strong></p>
               <ul class="list-disc list-inside mt-1 space-y-1">
-                <li>Vérifiez que Strapi est démarré : <code class="bg-red-200 px-1 rounded">npm run develop</code></li>
-                <li>Connectez-vous en tant qu'administrateur dans Strapi : <code class="bg-red-200 px-1 rounded">http://localhost:1337/admin</code></li>
-                <li>Vérifiez que votre token admin est valide (reconnectez-vous si nécessaire)</li>
+                <li>Vérifiez que l'API Laravel est accessible</li>
+                <li>Connectez-vous en tant qu'administrateur</li>
+                <li>Vérifiez que votre token est valide (reconnectez-vous si nécessaire)</li>
               </ul>
             </div>
           </div>
@@ -473,8 +473,8 @@
               <UiIcon name="warning" size="xl" class="mx-auto text-yellow-400 mb-3" />
               <h3 class="text-lg font-medium text-yellow-800 mb-1">Aucune mission trouvée</h3>
               <p class="text-yellow-700">
-                Aucune mission n'est enregistrée dans votre base de données Strapi.
-                <br>Créez des missions dans l'interface d'administration de Strapi.
+                Aucune mission n'est enregistrée dans votre base de données.
+                <br>Créez des missions via cette interface.
               </p>
             </div>
           </div>
@@ -526,12 +526,12 @@
 
               <!-- Missions list -->
               <div 
-                v-else
+                v-else-if="filteredMissions && filteredMissions.length > 0"
                 v-for="mission in filteredMissions" 
-                :key="mission.id"
+                :key="mission?.id || 'unknown'"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
-                <div class="grid grid-cols-8 gap-6 items-center text-base">
+                <div v-if="mission" class="grid grid-cols-8 gap-6 items-center text-base">
                   <div class="text-gray-900 font-medium">
                     <button 
                       @click="editMission(mission)"
@@ -544,17 +544,17 @@
                   <div class="text-gray-600 truncate" :title="mission.description">{{ mission.description || 'N/A' }}</div>
                   <div class="text-gray-600 font-mono text-sm">{{ mission.latitude || 'N/A' }}</div>
                   <div class="text-gray-600 font-mono text-sm">{{ mission.longitude || 'N/A' }}</div>
-                  <div class="text-gray-900 font-bold">{{ mission.threshold || 'N/A' }}</div>
+                  <div class="text-gray-900 font-bold">{{ mission.threshold || 'N/A' }} mètres</div>
                   <div class="text-gray-600 text-sm">
                     <NuxtLink 
-                      v-if="mission.circuit && getCircuitName(mission.circuit) !== 'Aucun'"
+                      v-if="getCircuitInfo(mission).hasCircuit"
                       :to="'/admin/circuits'"
                       class="text-purple-600 hover:text-purple-800 hover:underline transition-colors duration-200 cursor-pointer"
-                      :title="'Voir le circuit: ' + getCircuitName(mission.circuit)"
+                      :title="'Voir le circuit: ' + getCircuitInfo(mission).name"
                     >
-                      {{ getCircuitName(mission.circuit) }}
+                      {{ getCircuitInfo(mission).name }}
                     </NuxtLink>
-                    <span v-else>{{ getCircuitName(mission.circuit) }}</span>
+                    <span v-else>{{ getCircuitInfo(mission).name }}</span>
                   </div>
                   <div class="flex items-center">
                     <span 
@@ -581,7 +581,7 @@
                       <UiIcon name="edit" size="sm" />
                     </button>
                     <button
-                      @click="handleDeleteMission(mission.documentId || mission.id)"
+                      @click="handleDeleteMission(mission.id)"
                       class="text-red-600 hover:text-red-800 transition-colors duration-200 p-2"
                       title="Supprimer"
                     >
@@ -939,9 +939,7 @@ const {
   fetchMissions, 
   createMission: createMissionApi,
   updateMission,
-  deleteMission,
-  publishMission,
-  unpublishMission
+  deleteMission
 } = await useMissions()
 
 // Charger les circuits pour la relation
@@ -1007,6 +1005,24 @@ const activeFiltersCount = computed(() => {
   if (filters.value.difficulty) count++
   return count
 })
+
+// Helper functions pour les circuits
+const getCircuitInfo = (mission) => {
+  if (!mission || !mission.circuits || !Array.isArray(mission.circuits) || mission.circuits.length === 0) {
+    return { hasCircuit: false, name: 'Aucun circuit', id: null }
+  }
+  
+  const circuit = mission.circuits[0]
+  if (!circuit || !circuit.name) {
+    return { hasCircuit: false, name: 'Circuit sans nom', id: circuit?.id || null }
+  }
+  
+  return { 
+    hasCircuit: true, 
+    name: circuit.name, 
+    id: circuit.id 
+  }
+}
 
 // Missions filtrées
 const filteredMissions = computed(() => {
@@ -1089,7 +1105,7 @@ const createMission = async () => {
   if (!canCreateMission.value) return
   isCreating.value = true
   try {
-    // Préparer les données pour Strapi (ne pas envoyer published/publishedAt)
+    // Préparer les données pour Laravel API
     const missionData = {
       title: newMission.value.title,
       description: newMission.value.description || '',
@@ -1097,22 +1113,14 @@ const createMission = async () => {
       longitude: newMission.value.longitude,
       threshold: newMission.value.threshold,
       hint: newMission.value.hint || null,
-      media: newMission.value.media || null,
-      achievement: newMission.value.achievement || null,
-      circuit: newMission.value.circuit || null,
-      instructions: newMission.value.instructions || '',
-      address: newMission.value.address || '',
-      type: newMission.value.type || 'exploration',
-      difficulty: newMission.value.difficulty || 'moyen'
+      achievement_id: newMission.value.achievement?.id || null,
+      published: newMission.value.status === 'published'
     }
-    // Créer la mission via l'API Strapi
+    // Créer la mission via l'API Laravel
     const created = await createMissionApi(missionData)
-    // Si demandé, publier la mission après création
-    if (newMission.value.status === 'published' && created?.id) {
-      await publishMission(created.id)
-    }
+    
     // Afficher une notification de succès
-    console.log('Mission créée avec succès dans Strapi')
+    console.log('Mission créée avec succès avec Laravel API')
     // Réinitialiser le formulaire
     clearForm()
     
@@ -1127,23 +1135,21 @@ const createMission = async () => {
 // Fonctions pour les actions sur les missions
 const editMission = (mission) => {
   // Sauvegarder l'état de publication ORIGINAL
-  originalPublishedState.value = mission.publishedAt != null
+  originalPublishedState.value = mission.published || false
   
   // Réinitialiser l'onglet actif
   editActiveTab.value = 'infos'
   
   editingMission.value = { 
     ...mission,
-    published: mission.publishedAt != null,  // Convertir publishedAt en boolean pour l'interface
+    published: mission.published || false,  // Utiliser le champ published de Laravel
     // S'assurer que tous les champs optionnels existent
     hint: mission.hint || '',
-    media: mission.media || null,
+    achievement_id: mission.achievement_id || null,
     achievement: mission.achievement || null,
-    circuit: mission.circuit || null,
-    instructions: mission.instructions || '',
-    address: mission.address || '',
-    type: mission.type || 'exploration',
-    difficulty: mission.difficulty || 'moyen'
+    // Pour les circuits, prendre le premier s'il y en a plusieurs
+    circuit_id: mission.circuits && mission.circuits.length > 0 ? mission.circuits[0].id : null,
+    circuits: mission.circuits || []
   }
   showEditModal.value = true
 }
@@ -1152,74 +1158,39 @@ const saveEditMission = async () => {
   if (!editingMission.value) return
   
   try {
-    const missionId = editingMission.value.documentId || editingMission.value.id
+    const missionId = editingMission.value.id
     
-    console.log('🔍 DEBUG - Mission à modifier:', {
+    console.log('🔍 DEBUG - Mission à modifier (Laravel):', {
       id: editingMission.value.id,
-      documentId: editingMission.value.documentId,
       missionId: missionId,
-      wasPublished: editingMission.value.publishedAt != null,
+      wasPublished: editingMission.value.published || false,
       wantsToPublish: editingMission.value.published,
       fullData: editingMission.value
     })
     
-    // IMPORTANT : Envoyer TOUS les champs pour éviter leur suppression
-    // NE PAS envoyer publishedAt - Strapi v5 gère ça automatiquement avec draft/publish
+    // IMPORTANT : Envoyer les champs selon le schéma Laravel
     const missionData = {
-      // Champs requis du schema
+      // Champs requis du schema Laravel
       title: editingMission.value.title,
       description: editingMission.value.description || '',
       latitude: editingMission.value.latitude,
       longitude: editingMission.value.longitude,
       threshold: editingMission.value.threshold,
       
-      // Champs optionnels (garder les valeurs existantes)
+      // Champs optionnels
       hint: editingMission.value.hint || null,
-      media: editingMission.value.media || null,
-      achievement: editingMission.value.achievement || null,
-      circuit: editingMission.value.circuit || null,
+      achievement_id: editingMission.value.achievement_id || null,
       
-      // Champs legacy (pour compatibilité)
-      instructions: editingMission.value.instructions || '',
-      address: editingMission.value.address || '',
-      type: editingMission.value.type || 'exploration',
-      difficulty: editingMission.value.difficulty || 'moyen'
-      
-      // ❌ NE PAS ENVOYER publishedAt - Strapi v5 le gère automatiquement
+      // Statut de publication Laravel
+      published: editingMission.value.published || false
     }
     
-    console.log('📦 DEBUG - Données envoyées (sans publishedAt):', missionData)
+    console.log('📦 DEBUG - Données envoyées à Laravel:', missionData)
     
-    // 1. Mise à jour de la mission via l'API
+    // 1. Mise à jour de la mission via l'API Laravel
     const result = await updateMission(missionId, missionData)
     
     console.log('✅ DEBUG - Mission mise à jour:', result)
-    
-    // 2. Gérer le statut de publication séparément si changé
-    const wasPublished = originalPublishedState.value  // Utiliser l'état ORIGINAL sauvegardé
-    const wantsToPublish = editingMission.value.published
-    
-    console.log('🔍 DEBUG - Comparaison états:', { 
-      wasPublished, 
-      wantsToPublish,
-      willPublish: !wasPublished && wantsToPublish,
-      willUnpublish: wasPublished && !wantsToPublish,
-      willRepublish: wasPublished && wantsToPublish
-    })
-    
-    if (!wasPublished && wantsToPublish) {
-      // Publier une mission qui était en draft
-      console.log('� DEBUG - Publication de la mission...')
-      await publishMission(missionId)
-    } else if (wasPublished && !wantsToPublish) {
-      // Dépublier une mission qui était publiée
-      console.log('📝 DEBUG - Dépublication de la mission...')
-      await unpublishMission(missionId)
-    } else if (wasPublished && wantsToPublish) {
-      // La mission reste publiée, publier les changements
-      console.log('🔄 DEBUG - Republication des changements...')
-      await publishMission(missionId)
-    }
     
     // Fermer la modal
     showEditModal.value = false
@@ -1227,11 +1198,11 @@ const saveEditMission = async () => {
     originalPublishedState.value = false
     editActiveTab.value = 'infos' // Réinitialiser l'onglet actif
     
-    // Rafraîchir la liste après un court délai pour laisser Strapi synchroniser
+    // Rafraîchir la liste des missions
     setTimeout(async () => {
       await fetchMissions()
       lastUpdated.value = new Date()
-    }, 500)
+    }, 300)
     
     // Message de succès
     alert('Mission mise à jour avec succès !')
@@ -1275,7 +1246,7 @@ const selectEditAchievement = () => {
 // Fonction utilitaire pour récupérer le nom du circuit
 const getCircuitName = (circuitId) => {
   if (!circuitId) return 'Aucun'
-  const circuit = circuits.value.find(c => c.id === circuitId || c.documentId === circuitId)
+  const circuit = circuits.value.find(c => c.id === circuitId)
   return circuit ? (circuit.name || `Circuit ${circuit.id}`) : 'Circuit inconnu'
 }
 

@@ -17,22 +17,22 @@
 
         <!-- Formulaire -->
         <form @submit.prevent="handleLogin" class="space-y-3 sm:space-y-4">
-          <!-- Champ Nom -->
+          <!-- Champ Email -->
           <div class="text-left">
-            <label for="nom" class="block text-gray-800 text-sm font-medium mb-2">Nom</label>
+            <label for="email" class="block text-gray-800 text-sm font-medium mb-2">Email</label>
             <input
-              id="nom"
-              v-model="formData.nom"
-              type="text"
+              id="email"
+              v-model="formData.email"
+              type="email"
               autocomplete="username"
               class="w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white border-2 border-gray-500 rounded-lg text-gray-800 text-sm sm:text-base transition-all duration-200 focus:outline-none focus:border-blue-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50"
-              :class="{ 'border-red-500': errors.nom }"
-              placeholder="Nom"
+              :class="{ 'border-red-500': errors.email }"
+              placeholder="Email"
               required
               :disabled="isLoading"
             />
-            <span v-if="errors.nom" class="block text-red-500 text-sm mt-1">
-              {{ errors.nom }}
+            <span v-if="errors.email" class="block text-red-500 text-sm mt-1">
+              {{ errors.email }}
             </span>
           </div>
 
@@ -126,12 +126,12 @@ const router = useRouter()
 
 // État réactif simple
 const formData = reactive({
-  nom: '',
+  email: '',
   password: ''
 })
 
 const errors = reactive({
-  nom: '',
+  email: '',
   password: ''
 })
 
@@ -140,20 +140,23 @@ const isLoading = ref(false)
 
 // Computed
 const isFormValid = computed(() => {
-  return formData.nom.trim() && formData.password.trim()
+  return formData.email.trim() && formData.password.trim()
 })
 
 // Méthodes
 const validateForm = () => {
-  errors.nom = ''
+  errors.email = ''
   errors.password = ''
   globalError.value = ''
 
   let isValid = true
 
-  // Validation nom
-  if (!formData.nom.trim()) {
-    errors.nom = 'Le nom est requis'
+  // Validation email
+  if (!formData.email.trim()) {
+    errors.email = 'L\'email est requis'
+    isValid = false
+  } else if (!formData.email.includes('@')) {
+    errors.email = 'Format d\'email invalide'
     isValid = false
   }
 
@@ -172,8 +175,8 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    // Utilisation du vrai AuthService avec Strapi
-    const result = await AuthService.login(formData.nom, formData.password)
+    // Utilisation du vrai AuthService avec Laravel API
+    const result = await AuthService.login(formData.email, formData.password)
     
     console.log('Connexion réussie:', result.user)
     

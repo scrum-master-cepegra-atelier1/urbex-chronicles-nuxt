@@ -15,7 +15,7 @@
         <div v-if="loading" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div class="flex items-center">
             <UiIcon name="refresh" size="md" class="text-blue-500 mr-2 animate-spin" />
-            <span class="text-blue-800">Chargement des circuits depuis Strapi...</span>
+            <span class="text-blue-800">Chargement des circuits depuis Laravel API...</span>
           </div>
         </div>
         
@@ -303,10 +303,10 @@
                         <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Missions associées (relation oneToMany)
+                        Missions associées
                       </h3>
                       <p class="text-sm text-gray-600 mb-4">
-                        Sélectionnez les missions à associer à ce circuit
+                        Sélectionnez les missions à associer à ce circuit (relation many-to-many)
                       </p>
                       <div class="bg-white rounded-md p-3 border border-green-200">
                         <!-- Indicateur de chargement des missions -->
@@ -317,33 +317,74 @@
                           <p class="text-sm text-gray-600 mt-2">Chargement des missions...</p>
                         </div>
                         
-                        <!-- Liste des missions disponibles -->
-                        <div v-else-if="availableMissions && availableMissions.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
-                          <div 
-                            v-for="mission in availableMissions" 
-                            :key="mission.id || mission.documentId"
-                            class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
-                          >
-                            <input 
-                              :id="'mission-' + (mission.id || mission.documentId)"
-                              type="checkbox" 
-                              :value="mission.id || mission.documentId"
-                              v-model="selectedMissionIds"
-                              class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                            />
-                            <label 
-                              :for="'mission-' + (mission.id || mission.documentId)"
-                              class="flex-1 text-sm cursor-pointer"
+                        <!-- Liste déroulante avec checkboxes pour une meilleure UX -->
+                        <div v-else-if="availableMissions && availableMissions.length > 0">
+                          <label class="block text-sm font-medium text-gray-700 mb-3">
+                            Missions disponibles ({{ selectedMissionIds.length }} sélectionnée(s))
+                          </label>
+                          
+                          <!-- Affichage sous forme de checkboxes -->
+                          <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">
+                            <div 
+                              v-for="mission in availableMissions" 
+                              :key="mission.id"
+                              class="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                              @click="toggleMissionSelection(mission.id)"
                             >
-                              <div class="font-medium text-gray-900">{{ mission.title || mission.name || 'Mission sans titre' }}</div>
-                              <div class="text-gray-500 text-xs">{{ mission.description ? (mission.description.length > 60 ? mission.description.substring(0, 60) + '...' : mission.description) : 'Aucune description' }}</div>
-                            </label>
-                            <span 
-                              :class="mission.status === 'published' ? 'bg-green-100 text-green-800' : mission.status === 'modified' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'"
-                              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                            >
-                              {{ mission.status === 'published' ? 'Publié' : mission.status === 'modified' ? 'Modifié' : 'Brouillon' }}
-                            </span>
+                              <input
+                                type="checkbox"
+                                :checked="selectedMissionIds.includes(mission.id)"
+                                @change="toggleMissionSelection(mission.id)"
+                                @click.stop
+                                class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                              />
+                              <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">
+                                  {{ mission.title || 'Mission sans titre' }}
+                                </p>
+                                <p class="text-xs text-gray-500 truncate">
+                                  {{ mission.description || 'Pas de description' }}
+                                </p>
+                                <div class="flex items-center space-x-4 mt-1">
+                                  <span v-if="mission.latitude && mission.longitude" class="inline-flex items-center text-xs text-gray-400">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    {{ parseFloat(mission.latitude).toFixed(4) }}, {{ parseFloat(mission.longitude).toFixed(4) }}
+                                  </span>
+                                  <span v-if="mission.questions && mission.questions.length > 0" class="inline-flex items-center text-xs text-blue-500">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    {{ mission.questions.length }} question(s)
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- Actions rapides -->
+                          <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                            <div class="text-xs text-gray-500">
+                              {{ selectedMissionIds.length }} / {{ availableMissions.length }} missions sélectionnées
+                            </div>
+                            <div class="flex space-x-2">
+                              <button 
+                                @click="selectAllMissions"
+                                type="button"
+                                class="text-xs text-green-600 hover:text-green-800 underline"
+                              >
+                                Tout sélectionner
+                              </button>
+                              <button 
+                                @click="clearMissionSelection"
+                                type="button"
+                                class="text-xs text-gray-600 hover:text-gray-800 underline"
+                              >
+                                Tout désélectionner
+                              </button>
+                            </div>
                           </div>
                         </div>
                         
@@ -353,28 +394,44 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                           </svg>
                           <p class="mt-2 text-sm text-gray-500">Aucune mission disponible</p>
-                          <p class="text-xs text-gray-400">Créez d'abord des missions dans l'onglet Missions</p>
-                        </div>
-                        
-                        <!-- Missions sélectionnées -->
-                        <div v-if="selectedMissions.length > 0" class="mt-4 pt-3 border-t border-green-200">
-                          <p class="text-sm font-medium text-gray-900 mb-2">
-                            Missions sélectionnées ({{ selectedMissions.length }})
-                          </p>
-                          <div class="space-y-1">
-                            <div 
-                              v-for="mission in selectedMissions" 
-                              :key="mission.id || mission.documentId"
-                              class="flex items-center justify-between bg-green-50 p-2 rounded text-sm"
+                          <p class="text-xs text-gray-400 mb-3">Créez d'abord des missions dans l'onglet Missions</p>
+                          
+                          <!-- Boutons d'action -->
+                          <div class="flex flex-col items-center space-y-2">
+                            <nuxt-link 
+                              to="/admin/missions" 
+                              class="inline-flex items-center text-sm text-green-600 hover:text-green-800 underline"
                             >
-                              <span class="text-green-800">{{ mission.title || mission.name || 'Mission sans titre' }}</span>
-                              <button 
-                                @click="removeSelectedMission(mission.id || mission.documentId)"
-                                class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
-                              >
-                                ✕
-                              </button>
-                            </div>
+                              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                              </svg>
+                              Aller créer des missions
+                            </nuxt-link>
+                            
+                            <!-- Bouton de rechargement -->
+                            <button 
+                              @click="reloadMissions"
+                              type="button"
+                              class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
+                            >
+                              <svg class="w-4 h-4 mr-1 animate-spin" v-if="missionsLoading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                              </svg>
+                              <svg class="w-4 h-4 mr-1" v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                              </svg>
+                              Recharger les missions
+                            </button>
+                            
+                            <!-- Debug info -->
+                            <details class="mt-4 text-xs text-gray-400">
+                              <summary class="cursor-pointer">Debug Info</summary>
+                              <div class="mt-2 text-left bg-gray-100 p-2 rounded">
+                                <p>Missions Loading: {{ missionsLoading }}</p>
+                                <p>Available Missions: {{ availableMissions?.length || 0 }}</p>
+                                <p>FetchMissions Function: {{ typeof fetchMissions }}</p>
+                              </div>
+                            </details>
                           </div>
                         </div>
                       </div>
@@ -593,7 +650,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7"></path>
                 </svg>
                 <p class="mt-4 text-lg text-gray-500">{{ activeFiltersCount > 0 ? 'Aucun circuit ne correspond aux filtres' : 'Aucun circuit trouvé' }}</p>
-                <p class="text-sm text-gray-400">{{ activeFiltersCount > 0 ? 'Essayez de modifier vos critères de recherche' : 'Créez votre premier circuit ou vérifiez votre connexion Strapi' }}</p>
+                <p class="text-sm text-gray-400">{{ activeFiltersCount > 0 ? 'Essayez de modifier vos critères de recherche' : 'Créez votre premier circuit ou vérifiez votre connexion à l\'API Laravel' }}</p>
               </div>
               
               <!-- Liste des circuits -->
@@ -656,27 +713,6 @@
                   
                   <!-- Actions -->
                   <div class="flex items-center justify-center space-x-2">
-                    <!-- Bouton Archiver/Désarchiver -->
-                    <button
-                      @click="handleToggleStatus(circuit)"
-                      :class="circuit.published ? 'text-orange-600 hover:text-orange-800' : 'text-green-600 hover:text-green-800'"
-                      class="transition-colors duration-200 p-2"
-                      :title="circuit.published ? 'Archiver' : 'Désarchiver'"
-                    >
-                      <!-- Icône d'archivage (pour circuits publiés) -->
-                      <svg v-if="circuit.published" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14l-1 7H6L5 4z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4V2a1 1 0 011-1h12a1 1 0 011 1v2"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9h4"/>
-                      </svg>
-                      <!-- Icône de désarchivage (pour circuits archivés) -->
-                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14l-1 7H6L5 4z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4V2a1 1 0 011-1h12a1 1 0 011 1v2"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9l2-2m0 0l2 2m-2-2v6"/>
-                      </svg>
-                    </button>
-                    
                     <button
                       @click="handleEditCircuit(circuit)"
                       class="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1.5 rounded hover:bg-blue-50"
@@ -1267,7 +1303,7 @@
                 <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                Missions (Component - repeatable)
+                Missions associées
               </h4>
               <div class="bg-white rounded-md p-3 border border-purple-200">
                 <!-- Indicateur de chargement des missions -->
@@ -1278,33 +1314,74 @@
                   <p class="text-sm text-gray-600 mt-2">Chargement des missions...</p>
                 </div>
                 
-                <!-- Liste des missions disponibles -->
-                <div v-else-if="availableMissions && availableMissions.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
-                  <div 
-                    v-for="mission in availableMissions" 
-                    :key="mission.id || mission.documentId"
-                    class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
-                  >
-                    <input 
-                      :id="'edit-mission-' + (mission.id || mission.documentId)"
-                      type="checkbox" 
-                      :value="mission.id || mission.documentId"
-                      v-model="editingCircuitMissionIds"
-                      class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                    />
-                    <label 
-                      :for="'edit-mission-' + (mission.id || mission.documentId)"
-                      class="flex-1 text-sm cursor-pointer"
+                <!-- Liste avec checkboxes pour l'édition -->
+                <div v-else-if="availableMissions && availableMissions.length > 0">
+                  <label class="block text-sm font-medium text-gray-700 mb-3">
+                    Missions disponibles ({{ editingCircuitMissionIds.length }} sélectionnée(s))
+                  </label>
+                  
+                  <!-- Affichage sous forme de checkboxes -->
+                  <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-3">
+                    <div 
+                      v-for="mission in availableMissions" 
+                      :key="mission.id"
+                      class="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                      @click="toggleEditingMissionSelection(mission.id)"
                     >
-                      <div class="font-medium text-gray-900">{{ mission.title || mission.name || 'Mission sans titre' }}</div>
-                      <div class="text-gray-500 text-xs">{{ mission.description ? (mission.description.length > 60 ? mission.description.substring(0, 60) + '...' : mission.description) : 'Aucune description' }}</div>
-                    </label>
-                    <span 
-                      :class="mission.status === 'published' ? 'bg-green-100 text-green-800' : mission.status === 'modified' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'"
-                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                    >
-                      {{ mission.status === 'published' ? 'Publié' : mission.status === 'modified' ? 'Modifié' : 'Brouillon' }}
-                    </span>
+                      <input
+                        type="checkbox"
+                        :checked="editingCircuitMissionIds.includes(mission.id)"
+                        @change="toggleEditingMissionSelection(mission.id)"
+                        @click.stop
+                        class="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900">
+                          {{ mission.title || 'Mission sans titre' }}
+                        </p>
+                        <p class="text-xs text-gray-500 truncate">
+                          {{ mission.description || 'Pas de description' }}
+                        </p>
+                        <div class="flex items-center space-x-4 mt-1">
+                          <span v-if="mission.latitude && mission.longitude" class="inline-flex items-center text-xs text-gray-400">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            {{ parseFloat(mission.latitude).toFixed(4) }}, {{ parseFloat(mission.longitude).toFixed(4) }}
+                          </span>
+                          <span v-if="mission.questions && mission.questions.length > 0" class="inline-flex items-center text-xs text-blue-500">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {{ mission.questions.length }} question(s)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Actions rapides pour l'édition -->
+                  <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                    <div class="text-xs text-gray-500">
+                      {{ editingCircuitMissionIds.length }} / {{ availableMissions.length }} missions sélectionnées
+                    </div>
+                    <div class="flex space-x-2">
+                      <button 
+                        @click="selectAllEditingMissions"
+                        type="button"
+                        class="text-xs text-purple-600 hover:text-purple-800 underline"
+                      >
+                        Tout sélectionner
+                      </button>
+                      <button 
+                        @click="clearEditingMissionSelection"
+                        type="button"
+                        class="text-xs text-gray-600 hover:text-gray-800 underline"
+                      >
+                        Tout désélectionner
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
@@ -1314,29 +1391,16 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   <p class="mt-2 text-sm text-gray-500">Aucune mission disponible</p>
-                  <p class="text-xs text-gray-400">Créez d'abord des missions dans l'onglet Missions</p>
-                </div>
-                
-                <!-- Missions sélectionnées -->
-                <div v-if="editingCircuitSelectedMissions.length > 0" class="mt-4 pt-3 border-t border-purple-200">
-                  <p class="text-sm font-medium text-gray-900 mb-2">
-                    Missions sélectionnées ({{ editingCircuitSelectedMissions.length }})
-                  </p>
-                  <div class="space-y-1">
-                    <div 
-                      v-for="mission in editingCircuitSelectedMissions" 
-                      :key="mission.id || mission.documentId"
-                      class="flex items-center justify-between bg-purple-50 p-2 rounded text-sm"
-                    >
-                      <span class="text-purple-800">{{ mission.title || mission.name || 'Mission sans titre' }}</span>
-                      <button 
-                        @click="removeEditingCircuitMission(mission.id || mission.documentId)"
-                        class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
+                  <p class="text-xs text-gray-400 mb-3">Créez d'abord des missions dans l'onglet Missions</p>
+                  <nuxt-link 
+                    to="/admin/missions" 
+                    class="inline-flex items-center text-sm text-purple-600 hover:text-purple-800 underline"
+                  >
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Aller créer des missions
+                  </nuxt-link>
                 </div>
               </div>
             </div>
@@ -1452,19 +1516,70 @@ const {
   createCircuit,
   updateCircuit,
   deleteCircuit,
-  toggleCircuitStatus,
   formatDate,
   formatDuration,
   getCircuitAddress,
   testConnection
 } = useCircuits()
 
-// Composable pour les missions (pour la sélection)
-const {
-  missions: availableMissions,
-  loading: missionsLoading,
-  fetchMissions
-} = useMissions()
+// Composable pour les missions (pour la sélection) - Importation explicite
+let availableMissions = ref([])
+let missionsLoading = ref(false)
+let fetchMissions = null
+
+// Initialiser le composable missions de manière asynchrone
+onMounted(async () => {
+  try {
+    console.log('🔄 Initialisation du composable missions...')
+    const missionsComposable = await useMissions()
+    
+    // Assigner les fonctions et variables
+    availableMissions = missionsComposable.missions
+    missionsLoading = missionsComposable.loading
+    fetchMissions = missionsComposable.fetchMissions
+    
+    console.log('✅ Composable missions initialisé')
+    
+    // Charger les missions immédiatement
+    if (fetchMissions) {
+      console.log('🚀 Chargement des missions...')
+      await fetchMissions()
+      console.log('✅ Missions chargées:', availableMissions.value?.length || 0)
+      console.log('📋 Missions disponibles:', availableMissions.value)
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors de l\'initialisation des missions:', err)
+    // Fallback: créer des missions de test pour le développement
+    availableMissions.value = [
+      {
+        id: 1,
+        title: 'Mission Test 1',
+        description: 'Description de la mission test 1',
+        latitude: 50.4930,
+        longitude: 4.4680,
+        questions: [{ id: 1, title: 'Question test' }]
+      },
+      {
+        id: 2,
+        title: 'Mission Test 2',
+        description: 'Description de la mission test 2',
+        latitude: 50.4925,
+        longitude: 4.4678,
+        questions: [{ id: 2, title: 'Question test 2' }]
+      }
+    ]
+    console.log('⚠️ Utilisation des missions de test')
+  }
+  
+  // Charger les circuits
+  console.log('🚀 Chargement des circuits...')
+  try {
+    await fetchCircuits()
+    console.log('✅ Circuits chargés:', circuits.value?.length || 0)
+  } catch (err) {
+    console.warn('Erreur lors de fetchCircuits:', err)
+  }
+})
 
 // États locaux pour l'interface
 const showAddForm = ref(false)
@@ -1540,12 +1655,137 @@ const selectedMissionIds = ref([])
 
 // États pour l'édition de circuit avec missions
 const editingCircuitMissionIds = ref([])
-const editingCircuitSelectedMissions = computed(() => {
-  const missionsBase = Array.isArray(availableMissions?.value) ? availableMissions.value : []
-  const ids = Array.isArray(editingCircuitMissionIds?.value) ? editingCircuitMissionIds.value : []
-  if (missionsBase.length === 0 || ids.length === 0) return []
-  return missionsBase.filter(mission => ids.includes(mission.id || mission.documentId))
-})
+
+// Fonctions de gestion des missions
+const toggleMissionSelection = (missionId) => {
+  const index = selectedMissionIds.value.indexOf(missionId)
+  if (index > -1) {
+    selectedMissionIds.value.splice(index, 1)
+  } else {
+    selectedMissionIds.value.push(missionId)
+  }
+}
+
+const selectAllMissions = () => {
+  selectedMissionIds.value = availableMissions.value?.map(mission => mission.id) || []
+}
+
+const clearMissionSelection = () => {
+  selectedMissionIds.value = []
+}
+
+// Fonctions pour la gestion des missions dans l'édition
+const toggleEditingMissionSelection = (missionId) => {
+  const index = editingCircuitMissionIds.value.indexOf(missionId)
+  if (index > -1) {
+    editingCircuitMissionIds.value.splice(index, 1)
+  } else {
+    editingCircuitMissionIds.value.push(missionId)
+  }
+}
+
+const selectAllEditingMissions = () => {
+  editingCircuitMissionIds.value = availableMissions.value?.map(mission => mission.id) || []
+}
+
+const clearEditingMissionSelection = () => {
+  editingCircuitMissionIds.value = []
+}
+
+// Fonction pour recharger les missions manuellement
+const reloadMissions = async () => {
+  console.log('🔄 Rechargement manuel des missions...')
+  missionsLoading.value = true
+  
+  try {
+    if (fetchMissions) {
+      await fetchMissions()
+      console.log('✅ Missions rechargées:', availableMissions.value?.length || 0)
+      console.log('📋 Données missions:', availableMissions.value)
+    } else {
+      console.warn('⚠️ fetchMissions non disponible - Test direct de l\'API')
+      await testDirectApiCall()
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors du rechargement:', err)
+    console.log('🔄 Tentative d\'appel direct à l\'API...')
+    await testDirectApiCall()
+  } finally {
+    missionsLoading.value = false
+  }
+}
+
+// Fonction pour tester directement l'API
+const testDirectApiCall = async () => {
+  try {
+    console.log('🧪 Test direct de l\'API Laravel...')
+    
+    // Test avec fetch simple
+    const baseUrl = 'http://127.0.0.1:8000' // URL de l'API Laravel
+    const response = await fetch(`${baseUrl}/api/missions`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    console.log('📡 Statut de la réponse:', response.status)
+    console.log('📡 Headers:', Object.fromEntries(response.headers.entries()))
+    
+    if (response.ok) {
+      const data = await response.json()
+      console.log('✅ Données reçues:', data)
+      
+      // Extraire les missions selon la structure Laravel
+      const missions = data.missions || data.data || data
+      if (Array.isArray(missions)) {
+        availableMissions.value = missions
+        console.log(`✅ ${missions.length} missions chargées directement`)
+        showSuccessMessage(`${missions.length} missions chargées avec succès !`)
+      } else {
+        console.warn('⚠️ Format de données inattendu:', data)
+      }
+    } else {
+      const errorText = await response.text()
+      console.error('❌ Erreur API:', response.status, errorText)
+      throw new Error(`HTTP ${response.status}: ${errorText}`)
+    }
+  } catch (error) {
+    console.error('❌ Erreur lors du test direct:', error)
+    showErrorMessage('Impossible de charger les missions: ' + error.message)
+    
+    // Fallback avec des données de test
+    console.log('🔧 Utilisation de données de test...')
+    availableMissions.value = [
+      {
+        id: 1,
+        title: 'Mission de Test 1',
+        description: 'Mission de développement pour tester l\'interface',
+        latitude: 50.4930,
+        longitude: 4.4680,
+        threshold: 100,
+        hint: 'Ceci est une mission de test',
+        questions: [
+          { id: 1, title: 'Question test 1', type: 'qcm' }
+        ]
+      },
+      {
+        id: 2,
+        title: 'Mission de Test 2', 
+        description: 'Deuxième mission de test',
+        latitude: 50.4925,
+        longitude: 4.4678,
+        threshold: 50,
+        hint: 'Autre mission de test',
+        questions: [
+          { id: 2, title: 'Question test 2', type: 'enigme' }
+        ]
+      }
+    ]
+    showSuccessMessage('Missions de test chargées (mode développement)')
+  }
+}
 
 // Référence pour l'input file
 const fileInput = ref(null)
@@ -1655,14 +1895,6 @@ const filteredCircuits = computed(() => {
   return filtered
 })
 
-// Missions sélectionnées
-const selectedMissions = computed(() => {
-  const missionsBase = Array.isArray(availableMissions?.value) ? availableMissions.value : []
-  const ids = Array.isArray(selectedMissionIds?.value) ? selectedMissionIds.value : []
-  if (missionsBase.length === 0 || ids.length === 0) return []
-  return missionsBase.filter(mission => ids.includes(mission.id || mission.documentId))
-})
-
 // Nombre de filtres actifs
 const activeFiltersCount = computed(() => {
   let count = 0
@@ -1678,12 +1910,19 @@ const handleCreateCircuit = async () => {
   try {
     // Préparer les données du circuit avec les missions sélectionnées
     const circuitData = {
-      ...newCircuit.value,
-      // Inclure les missions sélectionnées dans le champ missions (relation oneToMany)
-      missions: selectedMissionIds.value.map(id => ({ id })),
-      // Garder la compatibilité avec le champ legacy
-      Missions: selectedMissions.value
+      name: newCircuit.value.name,
+      description: newCircuit.value.description,
+      duration: newCircuit.value.duration,
+      like: newCircuit.value.like || 0,
+      thumbnail: newCircuit.value.thumbnail,
+      // Utiliser mission_ids pour Laravel (Many-to-Many)
+      mission_ids: selectedMissionIds.value,
+      // Autres relations possibles
+      achievement_id: newCircuit.value.achievement?.id || null,
+      accessibility_ids: (newCircuit.value.accessibilities || []).map(a => a.id)
     }
+    
+    console.log('🚀 Création circuit avec données:', circuitData)
     
     await createCircuit(circuitData)
     showSuccessMessage('Circuit créé avec succès !')
@@ -1693,6 +1932,7 @@ const handleCreateCircuit = async () => {
     await fetchCircuits()
   } catch (err) {
     console.error('Erreur lors de la création:', err)
+    showSuccessMessage(err.message || 'Erreur lors de la création du circuit', 'error')
   }
 }
 
@@ -1703,9 +1943,8 @@ const handleDeleteCircuit = async (circuit) => {
 
 const confirmDelete = async () => {
   if (circuitToDelete.value) {
-    // Utiliser documentId pour Strapi v5, fallback sur id
-    const idToUse = circuitToDelete.value.documentId || circuitToDelete.value.id
-    const success = await deleteCircuit(idToUse)
+    // Utiliser l'id pour Laravel
+    const success = await deleteCircuit(circuitToDelete.value.id)
     if (success) {
       showSuccessMessage('Circuit supprimé avec succès !')
     } else if (error.value) {
@@ -1746,7 +1985,7 @@ const handleEditCircuit = (circuit) => {
   }
   
   // Initialiser les missions sélectionnées pour l'édition
-  editingCircuitMissionIds.value = (circuit.missions || []).map(mission => mission.id || mission.documentId).filter(Boolean)
+  editingCircuitMissionIds.value = (circuit.missions || []).map(mission => mission.id).filter(Boolean)
   
   showEditModal.value = true
 }
@@ -1782,30 +2021,24 @@ const saveEditCircuit = async () => {
 
     loading.value = true
     
-    // Préparer les données selon le schéma Strapi exact
+    // Préparer les données selon le schéma Laravel
     const updateData = {
-      // Champ string
       name: editingCircuit.value.name,
-      // Champ text
       description: editingCircuit.value.description || '',
-      // Champ biginteger
       duration: editingCircuit.value.duration ? parseInt(editingCircuit.value.duration) : null,
-      // Champ integer
       like: editingCircuit.value.like ? parseInt(editingCircuit.value.like) : 0,
-      // Component address (non repeatable)
-      address: editingCircuit.value.address || null,
-      // Component mission (repeatable) - utiliser les missions sélectionnées
-      missions: editingCircuitMissionIds.value.map(id => ({ id })),
-      // Component comment (repeatable)
-      comments: editingCircuit.value.comments || []
+      thumbnail: editingCircuit.value.thumbnail || null,
+      // Utiliser mission_ids pour Laravel (Many-to-Many)
+      mission_ids: editingCircuitMissionIds.value,
+      // Autres relations possibles
+      achievement_id: editingCircuit.value.achievement?.id || null,
+      accessibility_ids: (editingCircuit.value.accessibilities || []).map(a => a.id)
     }
 
-    console.log('💾 Sauvegarde des données circuit selon schéma Strapi:', updateData)
+    console.log('💾 Sauvegarde des données circuit selon schéma Laravel:', updateData)
     
-    // Utiliser documentId pour Strapi v5, fallback sur id
-    const idToUse = editingCircuit.value.documentId || editingCircuit.value.id
-    
-    await updateCircuit(idToUse, updateData)
+    // Utiliser l'id pour Laravel
+    await updateCircuit(editingCircuit.value.id, updateData)
     
     showSuccessMessage('✅ Circuit mis à jour avec succès !')
     showEditModal.value = false
@@ -1822,18 +2055,6 @@ const saveEditCircuit = async () => {
     showErrorMessage(`Erreur lors de la mise à jour: ${err.message}`)
   } finally {
     loading.value = false
-  }
-}
-
-const handleToggleStatus = async (circuit) => {
-  try {
-    // Utiliser documentId pour Strapi v5, fallback sur id
-    const idToUse = circuit.documentId || circuit.id
-    await toggleCircuitStatus(idToUse, !circuit.published)
-    showSuccessMessage(`Circuit ${circuit.published ? 'archivé' : 'désarchivé'} avec succès !`)
-    await fetchCircuits()
-  } catch (err) {
-    console.error('Erreur lors du changement de statut:', err)
   }
 }
 
@@ -1882,28 +2103,6 @@ const stats = computed(() => {
     })()
 
   return { total, active, new: nw }
-})
-
-// Chargement initial des données
-onMounted(async () => {
-  console.log('🚀 Chargement des circuits...')
-  try {
-    await fetchCircuits()
-  } catch (err) {
-    console.warn('Erreur lors de fetchCircuits:', err)
-  }
-
-  console.log('🚀 Chargement des missions...')
-  // Guard: fetchMissions may be undefined if the composable wasn't auto-imported or not available
-  if (typeof fetchMissions === 'function') {
-    try {
-      await fetchMissions()
-    } catch (err) {
-      console.warn('Erreur lors de fetchMissions:', err)
-    }
-  } else {
-    console.warn('fetchMissions non disponible, saut de l\'appel')
-  }
 })
 
 // Fonctions anciennes pour compatibilité (modifiées)
@@ -2179,16 +2378,6 @@ const viewCircuitComments = (circuit) => {
   } else {
     alert('Ce circuit n\'a pas de commentaires.')
   }
-}
-
-// Fonction pour retirer une mission sélectionnée
-const removeSelectedMission = (missionId) => {
-  selectedMissionIds.value = selectedMissionIds.value.filter(id => id !== missionId)
-}
-
-// Fonction pour retirer une mission sélectionnée dans l'édition
-const removeEditingCircuitMission = (missionId) => {
-  editingCircuitMissionIds.value = editingCircuitMissionIds.value.filter(id => id !== missionId)
 }
 
 // Fonctions pour les boutons du formulaire d'ajout

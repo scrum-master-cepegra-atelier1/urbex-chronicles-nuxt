@@ -1,65 +1,84 @@
 /**
- * Authentication Service for Strapi Admin
+ * Authentication Service for Laravel API
  * - Handles admin login, token storage, and verification
  */
 
-import { strapiAdminApi } from "./ApiService.js";
+import { laravelApi } from "./ApiService.js";
 
 class AuthService {
   constructor() {
-    this.tokenKey = "strapi_admin_token";
-    this.userKey = "strapi_admin_user";
-    this.tokenExpiryKey = "strapi_admin_token_expiry";
+    this.tokenKey = "laravel_admin_token";
+    this.userKey = "laravel_admin_user";
+    this.tokenExpiryKey = "laravel_admin_token_expiry";
     this.ttlMs = 24 * 60 * 60 * 1000; // 24h
   }
 
   // Login admin and store token + user
   async login(email, password) {
     try {
-      const res = await strapiAdminApi.post("/admin/login", {
+      const res = await laravelApi.post("/auth/login", {
         email,
         password,
       });
 
-      // Strapi admin usually returns { data: { token } }
-      const token = res?.data?.token || res?.token;
-      if (!token) throw new Error("Invalid response format from Strapi");
+      // Laravel API returns { token, user }
+      const token = res?.token;
+      const user = res?.user;
+
+      if (!token) throw new Error("Invalid response format from Laravel API");
+      if (!user) throw new Error("User data not received from Laravel API");
 
       this._setToken(token);
       this._setTokenExpiry(Date.now() + this.ttlMs);
 
-      // Fetch user profile
-      const me = await strapiAdminApi.get("/admin/users/me");
-      const user = me?.data || me;
-      if (!user) throw new Error("Failed to retrieve admin profile");
-
-      if (!this._hasAdminRole(user?.roles)) {
+      // Vérifier que l'utilisateur a un rôle admin
+      if (!this._hasAdminRole(user)) {
         // Not an admin, cleanup and block
         this.logout();
-        throw new Error("Access denied. User is not a Strapi administrator.");
+        throw new Error("Access denied. User is not a Laravel administrator.");
       }
 
       this._setUser(user);
+
+      // Mettre à jour le token dans laravelApi pour les prochaines requêtes
+      laravelApi.setToken(token);
+
       return { user, token };
     } catch (err) {
       // Normalize errors
       const status = err?.response?.status;
-      if (status === 400) throw new Error("Invalid credentials");
+      if (status === 400 || status === 401)
+        throw new Error("Invalid credentials");
       if (status === 403)
         throw new Error("Access denied. Invalid admin credentials.");
       if (status === 429)
         throw new Error("Too many attempts. Please try again later.");
       if (!err?.response)
-        throw new Error("Network error. Please check if Strapi is running.");
+        throw new Error(
+          "Network error. Please check if Laravel API is running."
+        );
       throw err;
     }
   }
 
-  logout() {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
-    localStorage.removeItem(this.tokenExpiryKey);
+  async logout() {
+    try {
+      // Appeler l'API Laravel pour déconnexion côté serveur
+      await laravelApi.post("/auth/logout");
+    } catch (e) {
+      // Continuer même si l'API échoue (token peut être expiré)
+      console.warn("Logout API call failed:", e.message);
+    } finally {
+      // Nettoyer le localStorage dans tous les cas
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(this.tokenKey);
+        localStorage.removeItem(this.userKey);
+        localStorage.removeItem(this.tokenExpiryKey);
+      }
+
+      // Supprimer le token de laravelApi
+      laravelApi.setToken(null);
+    }
   }
 
   isAuthenticated() {
@@ -80,9 +99,8 @@ class AuthService {
   async isAuthenticatedAdmin() {
     if (!this.isAuthenticated()) return false;
     try {
-      const me = await strapiAdminApi.get("/admin/users/me");
-      const roles = me?.data?.roles || me?.roles;
-      return this._hasAdminRole(roles);
+      const me = await laravelApi.get("/auth/me");
+      return this._hasAdminRole(me);
     } catch (e) {
       this.logout();
       return false;
@@ -106,11 +124,15 @@ class AuthService {
 
   async refreshToken() {
     try {
-      const res = await strapiAdminApi.post("/admin/renew-token");
-      const token = res?.data?.token || res?.token;
+      const res = await laravelApi.post("/auth/refresh");
+      const token = res?.token;
       if (!token) throw new Error("Failed to refresh token");
       this._setToken(token);
       this._setTokenExpiry(Date.now() + this.ttlMs);
+
+      // Mettre à jour le token dans laravelApi
+      laravelApi.setToken(token);
+
       return token;
     } catch (e) {
       this.logout();
@@ -119,18 +141,13 @@ class AuthService {
   }
 
   hasAdminAccess(user) {
-    return this._hasAdminRole(user?.roles);
+    return this._hasAdminRole(user);
   }
 
-  _hasAdminRole(roles) {
-    if (!Array.isArray(roles)) return false;
-    return roles.some(
-      (r) =>
-        r?.code === "strapi-super-admin" ||
-        r?.code === "strapi-admin" ||
-        r?.name === "Super Admin" ||
-        r?.name === "Admin"
-    );
+  _hasAdminRole(user) {
+    // Selon la doc Laravel : user.role peut être "user", "admin", "superadmin"
+    const userRole = user?.role;
+    return userRole === "admin" || userRole === "superadmin";
   }
 
   _setToken(token) {

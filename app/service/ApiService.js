@@ -1,13 +1,13 @@
 /**
  * API Service for URBEX CHRONICLES
- * Handles HTTP calls to different APIs in a scalable manner
+ * Handles HTTP calls to Laravel API in a scalable manner
  *
  * @class ApiService
  * @description Centralized service for making HTTP requests with automatic authentication
  * @example
- * // Use predefined Strapi instance
- * import { strapiApi } from '@/services/ApiService'
- * const data = await strapiApi.get('/articles')
+ * // Use predefined Laravel instance
+ * import { laravelApi } from '@/services/ApiService'
+ * const data = await laravelApi.get('/circuits')
  *
  * // Create custom instance
  * const customApi = new ApiService('https://api.example.com', 'your-token')
@@ -20,11 +20,16 @@ class ApiService {
    * @param {string|null} apiKey - API key for authentication (defaults to environment variable)
    */
   constructor(baseUrl = null, apiKey = null) {
-    // Use environment variables or provided parameters
-    this.baseUrl = baseUrl || import.meta.env.VITE_API_BASE_URL || "";
-    this.apiKey = apiKey || import.meta.env.VITE_API_KEY || null;
+    // Utiliser VITE_LARAVEL_BASE_URL comme base principale
+    this.baseUrl =
+      baseUrl ||
+      import.meta.env.VITE_LARAVEL_BASE_URL ||
+      import.meta.env.VITE_API_BASE_URL ||
+      "";
+    this.apiKey = apiKey || import.meta.env.VITE_LARAVEL_TOKEN || null;
     this.defaultHeaders = {
       "Content-Type": "application/json",
+      Accept: "application/json", // Laravel expects this header
     };
 
     // Add API key if it exists
@@ -51,10 +56,26 @@ class ApiService {
       ...options,
     };
 
+    // Ajouter automatiquement le token depuis localStorage si disponible
+    if (typeof window !== "undefined" && !config.headers.Authorization) {
+      const token = localStorage.getItem("laravel_admin_token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
     try {
       const response = await fetch(url, config);
 
       if (!response.ok) {
+        // Try to get Laravel error message from response
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          const message =
+            errorData.message || errorData.error || `HTTP ${response.status}`;
+          throw new Error(message);
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -66,7 +87,7 @@ class ApiService {
 
       return await response.text();
     } catch (error) {
-      console.error("API Error:", error);
+      console.error("Laravel API Error:", error);
       throw error;
     }
   }
@@ -143,6 +164,26 @@ class ApiService {
   }
 
   /**
+   * Set the authorization token for future requests
+   * @param {string} token - JWT token
+   */
+  setToken(token) {
+    if (token) {
+      this.defaultHeaders["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete this.defaultHeaders["Authorization"];
+    }
+  }
+
+  /**
+   * Get current authorization token
+   * @returns {string|null} - Current token or null
+   */
+  getToken() {
+    return this.defaultHeaders["Authorization"]?.replace("Bearer ", "") || null;
+  }
+
+  /**
    * File upload
    * @param {string} endpoint - The API endpoint
    * @param {FormData} formData - Form data to upload
@@ -163,42 +204,22 @@ class ApiService {
   }
 }
 
-// Default instance for Strapi API
-export const strapiApi = new ApiService(
-  import.meta.env.VITE_STRAPI_BASE_URL,
-  import.meta.env.VITE_STRAPI_TOKEN
+// Instance unique pour Laravel API avec authentification automatique
+export const laravelApi = new ApiService(
+  import.meta.env.VITE_LARAVEL_BASE_URL,
+  import.meta.env.VITE_LARAVEL_TOKEN
 );
 
-// Admin instance for Strapi Admin API
-class StrapiAdminApiService extends ApiService {
-  constructor() {
-    // Admin endpoints are NOT under /api, strip it if present
-    const base = (import.meta.env.VITE_STRAPI_BASE_URL || "").replace(
-      /\/?api\/?$/,
-      ""
-    );
-    super(base);
-  }
-
-  /**
-   * Override request method to handle admin authentication
-   */
-  async request(endpoint, options = {}) {
-    // Get admin token from localStorage if available
-    let headers = { ...this.defaultHeaders, ...(options.headers || {}) };
-    if (typeof window !== "undefined") {
-      const adminToken = localStorage.getItem("strapi_admin_token");
-      if (adminToken && !headers.Authorization) {
-        headers["Authorization"] = `Bearer ${adminToken}`;
-      }
-    }
-
-    return super.request(endpoint, { ...options, headers });
+// Initialiser l'instance avec le token depuis localStorage
+if (typeof window !== "undefined") {
+  const token = localStorage.getItem("laravel_admin_token");
+  if (token) {
+    laravelApi.setToken(token);
   }
 }
 
-// Admin API instance
-export const strapiAdminApi = new StrapiAdminApiService();
+// Export pour compatibilité (même instance)
+export const laravelAdminApi = laravelApi;
 
 // Export the class to create other instances
 export default ApiService;
