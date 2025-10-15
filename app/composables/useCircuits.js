@@ -16,10 +16,11 @@ export const useCircuits = () => {
   const totalCircuits = computed(() => circuits.value.length);
   const activeCircuits = computed(
     () =>
-      circuits.value.filter(
-        (circuit) =>
-          circuit.publishedAt !== null && circuit.publishedAt !== undefined
-      ).length
+      circuits.value.filter((circuit) => {
+        // Pour l'instant, on considère tous les circuits comme actifs
+        // car il n'y a pas de champ publishedAt dans la structure Laravel
+        return true;
+      }).length
   );
   const newCircuitsSuggested = computed(() => {
     // Calculer les nouveaux circuits des 7 derniers jours
@@ -27,8 +28,9 @@ export const useCircuits = () => {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     return circuits.value.filter((circuit) => {
-      if (!circuit.createdAt) return false;
-      const circuitDate = new Date(circuit.createdAt);
+      // Laravel utilise 'created_at' au format ISO
+      if (!circuit.created_at) return false;
+      const circuitDate = new Date(circuit.created_at);
       return circuitDate >= sevenDaysAgo;
     }).length;
   });
@@ -56,6 +58,9 @@ export const useCircuits = () => {
 
       if (Array.isArray(circuitData)) {
         circuits.value = circuitData;
+      } else if (response.circuits && Array.isArray(response.circuits)) {
+        // Si les données arrivent sous la forme { circuits: [...] }
+        circuits.value = response.circuits;
       } else {
         console.warn("⚠️ Format de réponse inattendu:", response);
         circuits.value = [];

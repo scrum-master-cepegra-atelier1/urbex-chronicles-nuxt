@@ -16,29 +16,41 @@
         
         <!-- Stats Section -->
         <div class="mb-12 flex-shrink-0">
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            <!-- Missions totales -->
+          <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 lg:gap-6">
+            <!-- Total missions -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
               <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ totalMissions }}</div>
-              <div class="text-base lg:text-lg text-gray-600">Missions totales</div>
+              <div class="text-base lg:text-lg text-gray-600">Total</div>
             </div>
 
-            <!-- Missions publiées -->
+            <!-- Questions QCM -->
+            <div class="bg-blue-50 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-blue-700 mb-2" style="font-family: 'Freeman', sans-serif;">{{ qcmQuestions }}</div>
+              <div class="text-base lg:text-lg text-blue-600">QCM</div>
+            </div>
+
+            <!-- Questions Enigmes -->
+            <div class="bg-purple-50 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-purple-700 mb-2" style="font-family: 'Freeman', sans-serif;">{{ enigmeQuestions }}</div>
+              <div class="text-base lg:text-lg text-purple-600">Énigmes</div>
+            </div>
+
+            <!-- Questions QR -->
             <div class="bg-green-50 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-green-700 mb-2" style="font-family: 'Freeman', sans-serif;">{{ publishedMissions }}</div>
-              <div class="text-base lg:text-lg text-green-600">Publiées</div>
+              <div class="text-4xl lg:text-5xl font-bold text-green-700 mb-2" style="font-family: 'Freeman', sans-serif;">{{ qrQuestions }}</div>
+              <div class="text-base lg:text-lg text-green-600">QR Code</div>
             </div>
 
-            <!-- Missions modifiées -->
+            <!-- Questions Vue 360 -->
             <div class="bg-orange-50 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-orange-700 mb-2" style="font-family: 'Freeman', sans-serif;">{{ modifiedMissions }}</div>
-              <div class="text-base lg:text-lg text-orange-600">Modifiées</div>
+              <div class="text-4xl lg:text-5xl font-bold text-orange-700 mb-2" style="font-family: 'Freeman', sans-serif;">{{ vue360Questions }}</div>
+              <div class="text-base lg:text-lg text-orange-600">Vue 360°</div>
             </div>
 
-            <!-- Missions en brouillon -->
-            <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ draftMissions }}</div>
-              <div class="text-base lg:text-lg text-gray-600">Brouillon</div>
+            <!-- Questions Autres -->
+            <div class="bg-gray-50 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-gray-700 mb-2" style="font-family: 'Freeman', sans-serif;">{{ autreQuestions }}</div>
+              <div class="text-base lg:text-lg text-gray-600">Autres</div>
             </div>
           </div>
         </div>
@@ -128,26 +140,14 @@
                     />
                   </div>
                   
-                  <!-- Statut -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-                    <select 
-                      v-model="newMission.status"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="draft">Brouillon</option>
-                      <option value="published">Publié</option>
-                    </select>
-                  </div>
-                  
                   <!-- Circuit associé -->
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Circuit associé (optionnel)</label>
                     <select 
-                      v-model="newMission.circuit"
+                      v-model="newMission.circuit_id"
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
-                      <option value="">Aucun circuit</option>
+                      <option :value="null">Aucun circuit</option>
                       <option 
                         v-for="circuit in circuits" 
                         :key="circuit.id" 
@@ -190,17 +190,6 @@
                     />
                     <p class="mt-1 text-sm text-gray-500">Coordonnée longitude de la mission</p>
                   </div>
-                  
-                  <!-- Adresse (optionnel) -->
-                  <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Adresse (optionnel)</label>
-                    <input 
-                      v-model="newMission.address"
-                      type="text" 
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Adresse approximative du lieu"
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -231,117 +220,216 @@
                     ></textarea>
                     <p class="mt-1 text-sm text-gray-500">Indice facultatif pour guider l'utilisateur</p>
                   </div>
+                </div>
+              </div>
 
-                  <!-- Media Component -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Media associé</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                      <div v-if="newMission.media">
-                        <div class="text-sm text-green-600 mb-2">✅ Media configuré</div>
-                        <div class="bg-gray-50 rounded p-3">
-                          <div><strong>Type:</strong> {{ newMission.media.type || 'Non défini' }}</div>
-                          <div><strong>URL:</strong> {{ newMission.media.url || 'Non définie' }}</div>
-                          <div><strong>Description:</strong> {{ newMission.media.description || 'Aucune' }}</div>
-                          <button
-                            type="button"
-                            @click="newMission.media = null"
-                            class="mt-2 text-sm text-red-600 hover:text-red-800"
-                          >
-                            Supprimer le media
-                          </button>
-                        </div>
-                      </div>
-                      <div v-else class="text-center py-8">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011-1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1h4zM7 8v10a2 2 0 002 2h6a2 2 0 002-2V8M9 12h6m-3-3v6" />
-                        </svg>
-                        <p class="text-sm text-gray-500 mt-2">Aucun media configuré</p>
-                        <button
-                          type="button"
-                          @click="newMission.media = { type: '', url: '', description: '' }"
-                          class="mt-2 text-sm text-blue-600 hover:text-blue-800"
+              <!-- Onglet Question -->
+              <div v-if="activeTab === 'question'" class="space-y-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Question associée</h4>
+                <div class="border border-gray-200 rounded-lg p-4">
+                  <div v-if="newMission.question">
+                    <!-- Affichage de la question existante -->
+                    <div class="bg-blue-50 rounded-lg p-4 mb-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <span class="text-lg font-medium text-blue-800">Question configurée</span>
+                        <button 
+                          @click="newMission.question = null"
+                          class="text-red-600 hover:text-red-800 text-sm"
                         >
-                          Ajouter un media
+                          Supprimer
+                        </button>
+                      </div>
+                      <div class="space-y-2">
+                        <div><strong>Type:</strong> {{ questionTypeLabel(newMission.question.type) }}</div>
+                        <div><strong>Titre:</strong> {{ newMission.question.title }}</div>
+                        <div><strong>Énoncé:</strong> {{ newMission.question.statement }}</div>
+                        <div v-if="newMission.question.type === 'qcm'">
+                          <strong>Choix:</strong> {{ newMission.question.data.choices.join(', ') }}
+                        </div>
+                        <div><strong>Réponse correcte:</strong> {{ newMission.question.answer.correct }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else>
+                    <!-- Formulaire de création de question -->
+                    <div class="space-y-4">
+                      <!-- Type de question -->
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Type de question</label>
+                        <select 
+                          v-model="questionForm.type"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          <option value="qcm">QCM (Questionnaire à choix multiple)</option>
+                          <option value="enigme">Énigme</option>
+                          <option value="qr">QR Code</option>
+                          <option value="vue360">Vue 360°</option>
+                          <option value="autre">Autre</option>
+                        </select>
+                      </div>
+
+                      <!-- Titre de la question -->
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Titre de la question</label>
+                        <input 
+                          v-model="questionForm.title"
+                          type="text" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="ex: Quel arbre est le plus grand ?"
+                        />
+                      </div>
+
+                      <!-- Énoncé -->
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Énoncé</label>
+                        <textarea 
+                          v-model="questionForm.statement"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          placeholder="Décrivez précisément la question"
+                          rows="3"
+                        ></textarea>
+                      </div>
+
+                      <!-- Choix pour QCM -->
+                      <div v-if="questionForm.type === 'qcm'">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Choix de réponses</label>
+                        <div class="space-y-2 mb-3">
+                          <div v-for="(choice, index) in questionForm.choices" :key="index" class="flex items-center space-x-2">
+                            <input 
+                              v-model="questionForm.choices[index]"
+                              type="text" 
+                              class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              :placeholder="`Choix ${index + 1}`"
+                            />
+                            <button 
+                              @click="removeChoice(index)"
+                              class="text-red-600 hover:text-red-800 p-2"
+                              :disabled="questionForm.choices.length <= 2"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                        <button 
+                          @click="addChoice"
+                          class="text-blue-600 hover:text-blue-800 text-sm"
+                          :disabled="questionForm.choices.length >= 6"
+                        >
+                          + Ajouter un choix
+                        </button>
+                      </div>
+
+                      <!-- Réponse correcte -->
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Réponse correcte</label>
+                        <select 
+                          v-if="questionForm.type === 'qcm'"
+                          v-model="questionForm.correct"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          <option value="">Sélectionnez la bonne réponse</option>
+                          <option v-for="choice in questionForm.choices.filter(c => c.trim())" :key="choice" :value="choice">
+                            {{ choice }}
+                          </option>
+                        </select>
+                        <input 
+                          v-else
+                          v-model="questionForm.correct"
+                          type="text" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          :placeholder="getAnswerPlaceholder(questionForm.type)"
+                        />
+                      </div>
+
+                      <!-- Difficulté -->
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Difficulté</label>
+                        <select 
+                          v-model="questionForm.difficulty"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        >
+                          <option value="easy">Facile</option>
+                          <option value="medium">Moyen</option>
+                          <option value="hard">Difficile</option>
+                        </select>
+                      </div>
+
+                      <!-- Actions pour la question -->
+                      <div class="flex gap-3 pt-4 border-t border-gray-200">
+                        <button
+                          @click="createQuestion"
+                          :disabled="!canCreateQuestion"
+                          :class="canCreateQuestion ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'"
+                          class="px-4 py-2 rounded-md transition-colors duration-200"
+                        >
+                          Créer la question
+                        </button>
+                        <button
+                          @click="clearQuestionForm"
+                          class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors duration-200"
+                        >
+                          Réinitialiser
                         </button>
                       </div>
                     </div>
                   </div>
+                </div>
+                <p class="text-sm text-gray-500">Une seule question par mission. La question sera intégrée lors de la création de la mission.</p>
+              </div>
 
-                  <!-- Achievement -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Succès associé</label>
-                    <div class="border border-gray-300 rounded-lg p-4">
-                      <div v-if="newMission.achievement">
-                        <div class="flex items-center justify-between bg-yellow-50 rounded p-3">
-                          <div class="flex items-center">
-                            <span class="text-2xl mr-2">🏆</span>
-                            <div>
-                              <div class="font-medium">{{ newMission.achievement.name || 'Achievement sélectionné' }}</div>
-                              <div class="text-sm text-gray-600">{{ newMission.achievement.experience || 0 }} XP</div>
+              <!-- Onglet Circuits -->
+              <div v-if="activeTab === 'circuits'" class="space-y-4">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">Circuits disponibles</h4>
+                
+                <!-- Sélection de circuit -->
+                <div class="mb-6">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Associer un circuit</label>
+                  <select 
+                    v-model="newMission.circuit_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option :value="null">Aucun circuit</option>
+                    <option 
+                      v-for="circuit in circuits" 
+                      :key="circuit.id" 
+                      :value="circuit.id"
+                    >
+                      {{ circuit.name || `Circuit ${circuit.id}` }} - {{ circuit.description || 'Pas de description' }}
+                    </option>
+                  </select>
+                  <p class="mt-1 text-sm text-gray-500">Sélectionnez un circuit existant pour associer cette mission</p>
+                </div>
+
+                <!-- Liste des circuits avec leurs missions -->
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                  <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                    <h5 class="font-medium text-gray-900">Aperçu des circuits existants</h5>
+                  </div>
+                  <div class="max-h-96 overflow-y-auto">
+                    <div v-if="circuits.length === 0" class="p-6 text-center text-gray-500">
+                      Aucun circuit disponible
+                    </div>
+                    <div v-else>
+                      <div v-for="circuit in circuits" :key="circuit.id" class="p-4 border-b border-gray-100 last:border-b-0">
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <h6 class="font-medium text-gray-900">{{ circuit.name || `Circuit ${circuit.id}` }}</h6>
+                            <p class="text-sm text-gray-600 mt-1">{{ circuit.description || 'Pas de description' }}</p>
+                            <div class="mt-2 flex items-center space-x-4 text-xs text-gray-500">
+                              <span>ID: {{ circuit.id }}</span>
+                              <span v-if="circuit.missions_count !== undefined">{{ circuit.missions_count }} mission(s)</span>
                             </div>
                           </div>
                           <button
-                            type="button"
-                            @click="newMission.achievement = null"
-                            class="text-red-600 hover:text-red-800 text-sm"
+                            @click="newMission.circuit_id = circuit.id"
+                            :class="newMission.circuit_id === circuit.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                            class="px-3 py-1 rounded text-sm font-medium transition-colors duration-200"
                           >
-                            Retirer
+                            {{ newMission.circuit_id === circuit.id ? 'Sélectionné' : 'Sélectionner' }}
                           </button>
                         </div>
                       </div>
-                      <div v-else class="text-center py-4">
-                        <span class="text-4xl">🏆</span>
-                        <p class="text-sm text-gray-500 mt-2">Aucun succès associé</p>
-                        <button
-                          type="button"
-                          @click="selectAchievement"
-                          class="mt-2 text-sm text-blue-600 hover:text-blue-800"
-                        >
-                          Associer un succès
-                        </button>
-                      </div>
                     </div>
-                    <p class="mt-1 text-sm text-gray-500">Succès débloqué lors de la réussite de cette mission</p>
-                  </div>
-                  
-                  <!-- Instructions -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
-                    <textarea 
-                      v-model="newMission.instructions"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Instructions spécifiques pour accomplir la mission"
-                      rows="3"
-                    ></textarea>
-                    <p class="mt-1 text-sm text-gray-500">Instructions détaillées pour les utilisateurs</p>
-                  </div>
-                  
-                  <!-- Type de mission -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Type de mission</label>
-                    <select 
-                      v-model="newMission.type"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="exploration">Exploration</option>
-                      <option value="photo">Photo</option>
-                      <option value="enquete">Enquête</option>
-                      <option value="decouverte">Découverte</option>
-                    </select>
-                  </div>
-                  
-                  <!-- Difficulté -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Difficulté</label>
-                    <select 
-                      v-model="newMission.difficulty"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    >
-                      <option value="facile">Facile</option>
-                      <option value="moyen">Moyen</option>
-                      <option value="difficile">Difficile</option>
-                      <option value="expert">Expert</option>
-                    </select>
                   </div>
                 </div>
               </div>
@@ -378,55 +466,29 @@
             <div class="flex items-center space-x-4">
               <UiFilterOverlay
                 page-title="les missions"
-                :filters="{ status: filters.status, type: filters.type, difficulty: filters.difficulty }"
+                :filters="{ circuit: filters.circuit }"
                 :active-filters-count="activeFiltersCount"
                 @update:filters="updateFilters"
                 @reset="resetFilters"
               >
                 <template #default="{ filters: filterValues, updateFilter }">
                   <div class="space-y-4">
-                    <!-- Filtres pour les missions -->
+                    <!-- Filtre par circuit -->
                     <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                      <label class="block text-sm font-medium text-gray-700 mb-2">Circuit</label>
                       <select 
-                        :value="filterValues.status"
-                        @change="updateFilter('status', $event.target.value)"
+                        :value="filterValues.circuit"
+                        @change="updateFilter('circuit', $event.target.value)"
                         class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
                       >
-                        <option value="">Tous</option>
-                        <option value="published">Publié</option>
-                        <option value="modified">Modifié (à republier)</option>
-                        <option value="draft">Brouillon</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                      <select 
-                        :value="filterValues.type"
-                        @change="updateFilter('type', $event.target.value)"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
-                      >
-                        <option value="">Tous</option>
-                        <option value="exploration">Exploration</option>
-                        <option value="photo">Photo</option>
-                        <option value="enquete">Enquête</option>
-                        <option value="decouverte">Découverte</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Difficulté</label>
-                      <select 
-                        :value="filterValues.difficulty"
-                        @change="updateFilter('difficulty', $event.target.value)"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
-                      >
-                        <option value="">Tous</option>
-                        <option value="facile">Facile</option>
-                        <option value="moyen">Moyen</option>
-                        <option value="difficile">Difficile</option>
-                        <option value="expert">Expert</option>
+                        <option value="">Tous les circuits</option>
+                        <option 
+                          v-for="circuit in circuits" 
+                          :key="circuit.id" 
+                          :value="circuit.id"
+                        >
+                          {{ circuit.name || `Circuit ${circuit.id}` }}
+                        </option>
                       </select>
                     </div>
                   </div>
@@ -494,14 +556,13 @@
           <div class="bg-white rounded-lg border border-gray-200">
             <!-- Table Header -->
             <div class="bg-gray-50 px-6 py-6 border-b border-gray-200">
-              <div class="grid grid-cols-8 gap-6 text-base font-medium text-gray-700">
+              <div class="grid grid-cols-7 gap-6 text-base font-medium text-gray-700">
                 <div>Titre</div>
                 <div>Description</div>
                 <div>Latitude</div>
                 <div>Longitude</div>
                 <div>Threshold</div>
                 <div>Circuit</div>
-                <div>Statut</div>
                 <div>Actions</div>
               </div>
             </div>
@@ -511,8 +572,7 @@
               <!-- Loading skeleton -->
               <div v-if="loading" class="px-6 py-6">
                 <div class="animate-pulse space-y-4">
-                  <div v-for="n in 3" :key="n" class="grid grid-cols-8 gap-6">
-                    <div class="h-4 bg-gray-200 rounded"></div>
+                  <div v-for="n in 3" :key="n" class="grid grid-cols-7 gap-6">
                     <div class="h-4 bg-gray-200 rounded"></div>
                     <div class="h-4 bg-gray-200 rounded"></div>
                     <div class="h-4 bg-gray-200 rounded"></div>
@@ -531,7 +591,7 @@
                 :key="mission?.id || 'unknown'"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
-                <div v-if="mission" class="grid grid-cols-8 gap-6 items-center text-base">
+                <div v-if="mission" class="grid grid-cols-7 gap-6 items-center text-base">
                   <div class="text-gray-900 font-medium">
                     <button 
                       @click="editMission(mission)"
@@ -546,31 +606,61 @@
                   <div class="text-gray-600 font-mono text-sm">{{ mission.longitude || 'N/A' }}</div>
                   <div class="text-gray-900 font-bold">{{ mission.threshold || 'N/A' }} mètres</div>
                   <div class="text-gray-600 text-sm">
-                    <NuxtLink 
-                      v-if="getCircuitInfo(mission).hasCircuit"
-                      :to="'/admin/circuits'"
-                      class="text-purple-600 hover:text-purple-800 hover:underline transition-colors duration-200 cursor-pointer"
-                      :title="'Voir le circuit: ' + getCircuitInfo(mission).name"
-                    >
-                      {{ getCircuitInfo(mission).name }}
-                    </NuxtLink>
-                    <span v-else>{{ getCircuitInfo(mission).name }}</span>
-                  </div>
-                  <div class="flex items-center">
-                    <span 
-                      :class="{
-                        'bg-green-100 text-green-800': mission.status === 'published',
-                        'bg-orange-100 text-orange-800': mission.status === 'modified',
-                        'bg-gray-100 text-gray-800': mission.status === 'draft'
-                      }" 
-                      class="px-2 py-1 rounded-full text-xs font-medium"
-                    >
-                      {{ 
-                        mission.status === 'published' ? 'Publié' : 
-                        mission.status === 'modified' ? 'Modifié' : 
-                        'Brouillon' 
-                      }}
-                    </span>
+                    <div v-if="mission.circuits && mission.circuits.length > 0" class="relative">
+                      <!-- Bouton pour afficher le nombre de circuits -->
+                      <button
+                        @click="toggleCircuitsList(mission.id)"
+                        class="flex items-center space-x-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors duration-200"
+                        :class="{ 'bg-purple-200': showCircuitsList[mission.id] }"
+                      >
+                        <span class="font-medium">{{ mission.circuits.length }}</span>
+                        <span>circuit{{ mission.circuits.length > 1 ? 's' : '' }}</span>
+                        <UiIcon 
+                          name="close" 
+                          size="sm" 
+                          class="transform transition-transform duration-200"
+                          :class="{ 'rotate-180': showCircuitsList[mission.id] }"
+                        />
+                      </button>
+                      
+                      <!-- Liste des circuits (dropdown) -->
+                      <div 
+                        v-if="showCircuitsList[mission.id]" 
+                        class="absolute top-full left-0 mt-2 min-w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto"
+                      >
+                        <div class="p-2">
+                          <div class="text-xs font-medium text-gray-500 mb-2 px-2">Circuits associés :</div>
+                          <div 
+                            v-for="circuit in mission.circuits" 
+                            :key="circuit.id"
+                            class="flex items-center justify-between p-2 hover:bg-gray-50 rounded group"
+                          >
+                            <div class="flex-1">
+                              <NuxtLink 
+                                :to="'/admin/circuits'"
+                                class="text-purple-600 hover:text-purple-800 font-medium text-sm"
+                                :title="'Voir le circuit: ' + (circuit.name || `Circuit ${circuit.id}`)"
+                                @click="closeCircuitsList"
+                              >
+                                {{ circuit.name || `Circuit ${circuit.id}` }}
+                              </NuxtLink>
+                              <div class="text-xs text-gray-500">ID: {{ circuit.id }}</div>
+                            </div>
+                            <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                @click="handleDetachCircuit(mission.id, circuit.id, circuit.name)"
+                                class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors duration-200"
+                                :title="'Détacher le circuit: ' + (circuit.name || `Circuit ${circuit.id}`)"
+                              >
+                                <UiIcon name="trash" size="xs" />
+                              </button>
+                              <UiIcon name="eye" size="xs" class="text-gray-400" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <span v-else class="text-gray-400 italic text-sm">Aucun circuit</span>
                   </div>
                   <div class="flex items-center space-x-3">
                     <button
@@ -658,35 +748,46 @@
               />
             </div>
             
-            <!-- Statut -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-              <select 
-                v-model="editingMission.published"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option :value="false">Brouillon</option>
-                <option :value="true">Publié</option>
-              </select>
-            </div>
-            
             <!-- Circuit associé -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Circuit associé (optionnel)</label>
-              <select 
-                v-model="editingMission.circuit"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="">Aucun circuit</option>
-                <option 
-                  v-for="circuit in circuits" 
-                  :key="circuit.id" 
-                  :value="circuit.id"
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Circuits associés</label>
+              
+              <!-- Circuits actuels -->
+              <div v-if="editingMission.circuits && editingMission.circuits.length > 0" class="mb-4">
+                <div class="text-sm font-medium text-gray-700 mb-2">Circuits actuels :</div>
+                <div class="space-y-2">
+                  <div v-for="circuit in editingMission.circuits" :key="circuit.id" 
+                       class="flex items-center justify-between bg-purple-50 rounded-lg p-3">
+                    <div class="flex items-center">
+                      <span class="text-purple-700 font-medium">{{ circuit.name || `Circuit ${circuit.id}` }}</span>
+                      <span class="text-purple-500 text-sm ml-2">(ID: {{ circuit.id }})</span>
+                    </div>
+                    <span class="text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded">Existant</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Sélection d'un nouveau circuit -->
+              <div>
+                <div class="text-sm font-medium text-gray-700 mb-2">Modifier le circuit principal :</div>
+                <select 
+                  v-model="editingMission.circuit_id"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
-                  {{ circuit.name || `Circuit ${circuit.id}` }}
-                </option>
-              </select>
-              <p class="mt-1 text-sm text-gray-500">Associez cette mission à un circuit existant</p>
+                  <option :value="null">Aucun circuit</option>
+                  <option 
+                    v-for="circuit in circuits" 
+                    :key="circuit.id" 
+                    :value="circuit.id"
+                  >
+                    {{ circuit.name || `Circuit ${circuit.id}` }}
+                  </option>
+                </select>
+                <p class="mt-1 text-sm text-gray-500">
+                  Note: Cette modification affectera le circuit principal. 
+                  Les autres associations de circuits sont gérées côté API.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -720,17 +821,6 @@
               />
               <p class="mt-1 text-sm text-gray-500">Coordonnée longitude de la mission</p>
             </div>
-            
-            <!-- Adresse (optionnel) -->
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-2">Adresse (optionnel)</label>
-              <input 
-                v-model="editingMission.address"
-                type="text" 
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Adresse approximative du lieu"
-              />
-            </div>
           </div>
         </div>
 
@@ -761,117 +851,34 @@
               ></textarea>
               <p class="mt-1 text-sm text-gray-500">Indice facultatif pour guider l'utilisateur</p>
             </div>
+          </div>
+        </div>
 
-            <!-- Media Component -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Media associé</label>
-              <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                <div v-if="editingMission.media">
-                  <div class="text-sm text-green-600 mb-2">✅ Media configuré</div>
-                  <div class="bg-gray-50 rounded p-3">
-                    <div><strong>Type:</strong> {{ editingMission.media.type || 'Non défini' }}</div>
-                    <div><strong>URL:</strong> {{ editingMission.media.url || 'Non définie' }}</div>
-                    <div><strong>Description:</strong> {{ editingMission.media.description || 'Aucune' }}</div>
-                    <button
-                      type="button"
-                      @click="editingMission.media = null"
-                      class="mt-2 text-sm text-red-600 hover:text-red-800"
-                    >
-                      Supprimer le media
-                    </button>
-                  </div>
+        <!-- Onglet Question -->
+        <div v-if="editActiveTab === 'question'" class="space-y-4">
+          <h4 class="text-lg font-semibold text-gray-800 mb-4">Question associée</h4>
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div v-if="editingMission.questions && editingMission.questions.length > 0">
+              <!-- Affichage de la question existante -->
+              <div class="bg-blue-50 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-lg font-medium text-blue-800">Question existante</span>
                 </div>
-                <div v-else class="text-center py-8">
-                  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011-1v1a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1h4zM7 8v10a2 2 0 002 2h6a2 2 0 002-2V8M9 12h6m-3-3v6" />
-                  </svg>
-                  <p class="text-sm text-gray-500 mt-2">Aucun media configuré</p>
-                  <button
-                    type="button"
-                    @click="editingMission.media = { type: '', url: '', description: '' }"
-                    class="mt-2 text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Ajouter un media
-                  </button>
+                <div class="space-y-2">
+                  <div><strong>Type:</strong> {{ questionTypeLabel(editingMission.questions[0].type) }}</div>
+                  <div><strong>Titre:</strong> {{ editingMission.questions[0].title }}</div>
+                  <div><strong>Énoncé:</strong> {{ editingMission.questions[0].statement }}</div>
+                  <div v-if="editingMission.questions[0].type === 'qcm' && editingMission.questions[0].data">
+                    <strong>Choix:</strong> {{ editingMission.questions[0].data.choices?.join(', ') || 'Aucun choix' }}
+                  </div>
+                  <div><strong>Réponse correcte:</strong> {{ editingMission.questions[0].answer?.correct || 'Non définie' }}</div>
                 </div>
               </div>
             </div>
-
-            <!-- Achievement -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Succès associé</label>
-              <div class="border border-gray-300 rounded-lg p-4">
-                <div v-if="editingMission.achievement">
-                  <div class="flex items-center justify-between bg-yellow-50 rounded p-3">
-                    <div class="flex items-center">
-                      <span class="text-2xl mr-2">🏆</span>
-                      <div>
-                        <div class="font-medium">{{ editingMission.achievement.name || 'Achievement sélectionné' }}</div>
-                        <div class="text-sm text-gray-600">{{ editingMission.achievement.experience || 0 }} XP</div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      @click="editingMission.achievement = null"
-                      class="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Retirer
-                    </button>
-                  </div>
-                </div>
-                <div v-else class="text-center py-4">
-                  <span class="text-4xl">🏆</span>
-                  <p class="text-sm text-gray-500 mt-2">Aucun succès associé</p>
-                  <button
-                    type="button"
-                    @click="selectEditAchievement"
-                    class="mt-2 text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Associer un succès
-                  </button>
-                </div>
-              </div>
-              <p class="mt-1 text-sm text-gray-500">Succès débloqué lors de la réussite de cette mission</p>
-            </div>
-            
-            <!-- Instructions -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
-              <textarea 
-                v-model="editingMission.instructions"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Instructions spécifiques pour accomplir la mission"
-                rows="3"
-              ></textarea>
-              <p class="mt-1 text-sm text-gray-500">Instructions détaillées pour les utilisateurs</p>
-            </div>
-            
-            <!-- Type de mission -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Type de mission</label>
-              <select 
-                v-model="editingMission.type"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="exploration">Exploration</option>
-                <option value="photo">Photo</option>
-                <option value="enquete">Enquête</option>
-                <option value="decouverte">Découverte</option>
-              </select>
-            </div>
-            
-            <!-- Difficulté -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Difficulté</label>
-              <select 
-                v-model="editingMission.difficulty"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="facile">Facile</option>
-                <option value="moyen">Moyen</option>
-                <option value="difficile">Difficile</option>
-                <option value="expert">Expert</option>
-              </select>
+            <div v-else class="text-center py-8 text-gray-500">
+              <span class="text-4xl">❓</span>
+              <p class="mt-2">Aucune question associée à cette mission</p>
+              <p class="text-sm mt-1">Les questions ne peuvent être modifiées que lors de la création</p>
             </div>
           </div>
         </div>
@@ -900,7 +907,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Meta de la page
 definePageMeta({
@@ -933,18 +940,24 @@ const {
   loading, 
   error, 
   totalMissions,
-  publishedMissions,
-  draftMissions,
-  modifiedMissions,
+  qcmQuestions,
+  enigmeQuestions,
+  qrQuestions,
+  vue360Questions,
+  autreQuestions,
   fetchMissions, 
   createMission: createMissionApi,
   updateMission,
-  deleteMission
+  deleteMission,
+  detachCircuitFromMission
 } = await useMissions()
 
 // Charger les circuits pour la relation
 const { circuits, fetchCircuits } = useCircuits()
 await fetchCircuits()
+
+// Debug : vérifier que les circuits sont chargés
+console.log('🔍 DEBUG - Circuits chargés:', circuits.value)
 
 // Gestion des onglets pour l'ajout de mission
 const activeTab = ref('infos')
@@ -952,7 +965,9 @@ const showAddForm = ref(false)
 const tabs = [
   { id: 'infos', label: 'Informations', icon: '📝' },
   { id: 'location', label: 'Localisation', icon: '📍' },
-  { id: 'description', label: 'Description', icon: '📋' }
+  { id: 'description', label: 'Description', icon: '📋' },
+  { id: 'question', label: 'Question', icon: '❓' },
+  { id: 'circuits', label: 'Circuits', icon: '🔗' }
 ]
 
 const setActiveTab = (tabId) => {
@@ -964,7 +979,8 @@ const editActiveTab = ref('infos')
 const editTabs = [
   { id: 'infos', label: 'Informations', icon: '📝' },
   { id: 'location', label: 'Localisation', icon: '📍' },
-  { id: 'description', label: 'Description', icon: '📋' }
+  { id: 'description', label: 'Description', icon: '📋' },
+  { id: 'question', label: 'Question', icon: '❓' }
 ]
 
 const setEditActiveTab = (tabId) => {
@@ -974,11 +990,18 @@ const setEditActiveTab = (tabId) => {
 // Chargement initial des missions
 await fetchMissions()
 
+// Event listener pour fermer les dropdowns
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
 // États réactifs pour les filtres
 const filters = ref({
-  status: '',
-  type: '',
-  difficulty: ''
+  circuit: ''
 })
 
 // État pour la dernière mise à jour
@@ -991,18 +1014,14 @@ const updateFilters = (newFilters) => {
 
 const resetFilters = () => {
   filters.value = {
-    status: '',
-    type: '',
-    difficulty: ''
+    circuit: ''
   }
 }
 
 // Compteur de filtres actifs
 const activeFiltersCount = computed(() => {
   let count = 0
-  if (filters.value.status) count++
-  if (filters.value.type) count++
-  if (filters.value.difficulty) count++
+  if (filters.value.circuit) count++
   return count
 })
 
@@ -1028,19 +1047,15 @@ const getCircuitInfo = (mission) => {
 const filteredMissions = computed(() => {
   let result = missions.value
   
-  // Filtre par statut (utiliser mission.status au lieu de mission.published)
-  if (filters.value.status) {
-    result = result.filter(m => m.status === filters.value.status)
-  }
-  
-  // Filtre par type
-  if (filters.value.type) {
-    result = result.filter(m => m.type === filters.value.type)
-  }
-  
-  // Filtre par difficulté
-  if (filters.value.difficulty) {
-    result = result.filter(m => m.difficulty === filters.value.difficulty)
+  // Filtre par circuit
+  if (filters.value.circuit) {
+    result = result.filter(m => {
+      // Vérifier si la mission est associée au circuit sélectionné
+      if (m.circuits && Array.isArray(m.circuits)) {
+        return m.circuits.some(circuit => circuit.id.toString() === filters.value.circuit.toString())
+      }
+      return false
+    })
   }
   
   return result
@@ -1048,7 +1063,7 @@ const filteredMissions = computed(() => {
 
 // États réactifs pour le formulaire d'ajout
 const newMission = ref({
-  // Champs requis du schema
+  // Champs requis du schema Laravel
   title: '',
   description: '',
   latitude: null,
@@ -1057,16 +1072,21 @@ const newMission = ref({
   
   // Champs optionnels du schema
   hint: '',
-  media: null,
-  achievement: null,
-  circuit: null, // Relation avec le circuit
+  achievement_id: null,
+  circuit_id: null, // ID du circuit associé
   
-  // Champs legacy (pour compatibilité)
-  instructions: '',
-  address: '',
-  type: 'exploration',
-  difficulty: 'moyen',
-  published: false
+  // Question associée (une seule par mission)
+  question: null
+})
+
+// Formulaire pour la question
+const questionForm = ref({
+  type: 'qcm',
+  title: '',
+  statement: '',
+  choices: ['', '', ''], // Pour QCM
+  correct: '',
+  difficulty: 'medium'
 })
 
 const isCreating = ref(false)
@@ -1074,37 +1094,123 @@ const isCreating = ref(false)
 // États pour la modal d'édition
 const showEditModal = ref(false)
 const editingMission = ref(null)
-const originalPublishedState = ref(false) // Sauvegarder l'état de publication original
+
+// État pour l'affichage des listes de circuits
+const showCircuitsList = ref({})
 
 // Validation pour la création
 const canCreateMission = computed(() => {
   return newMission.value.title && newMission.value.title.length >= 5
 })
 
+// Validation pour la création de question
+const canCreateQuestion = computed(() => {
+  if (!questionForm.value.title || !questionForm.value.statement || !questionForm.value.correct) {
+    return false
+  }
+  if (questionForm.value.type === 'qcm') {
+    return questionForm.value.choices.filter(c => c.trim()).length >= 2
+  }
+  return true
+})
+
+// Méthodes pour gérer les questions
+const addChoice = () => {
+  if (questionForm.value.choices.length < 6) {
+    questionForm.value.choices.push('')
+  }
+}
+
+const removeChoice = (index) => {
+  if (questionForm.value.choices.length > 2) {
+    questionForm.value.choices.splice(index, 1)
+    // Si la réponse correcte était celle supprimée, la réinitialiser
+    if (questionForm.value.correct === questionForm.value.choices[index]) {
+      questionForm.value.correct = ''
+    }
+  }
+}
+
+const createQuestion = () => {
+  if (!canCreateQuestion.value) return
+  
+  // Créer l'objet question selon le format Laravel
+  const question = {
+    type: questionForm.value.type,
+    title: questionForm.value.title,
+    statement: questionForm.value.statement,
+    data: questionForm.value.type === 'qcm' ? {
+      choices: questionForm.value.choices.filter(c => c.trim())
+    } : {},
+    answer: {
+      correct: questionForm.value.correct
+    },
+    metadata: {
+      difficulty: questionForm.value.difficulty
+    }
+  }
+  
+  newMission.value.question = question
+}
+
+const clearQuestionForm = () => {
+  questionForm.value = {
+    type: 'qcm',
+    title: '',
+    statement: '',
+    choices: ['', '', ''],
+    correct: '',
+    difficulty: 'medium'
+  }
+}
+
+const questionTypeLabel = (type) => {
+  const labels = {
+    'qcm': 'QCM (Questionnaire à choix multiple)',
+    'enigme': 'Énigme',
+    'qr': 'QR Code',
+    'vue360': 'Vue 360°',
+    'autre': 'Autre'
+  }
+  return labels[type] || type
+}
+
+const getAnswerPlaceholder = (type) => {
+  const placeholders = {
+    'enigme': 'Tapez la solution de l\'énigme',
+    'qr': 'Contenu ou URL du QR Code',
+    'vue360': 'Instructions pour la vue 360°',
+    'autre': 'Tapez la réponse correcte'
+  }
+  return placeholders[type] || 'Tapez la réponse correcte'
+}
+
 // Fonctions pour le formulaire
 const clearForm = () => {
   newMission.value = {
     title: '',
     description: '',
-    instructions: '',
     latitude: null,
     longitude: null,
-    address: '',
     threshold: null,
-    type: 'exploration',
-    difficulty: 'moyen',
-    status: 'draft',
     hint: '',
-    media: null,
-    achievement: null,
-    circuit: null
+    achievement_id: null,
+    circuit_id: null,
+    question: null
   }
+  clearQuestionForm()
 }
 
 const createMission = async () => {
   if (!canCreateMission.value) return
   isCreating.value = true
   try {
+    console.log('🔍 DEBUG - Valeurs du formulaire avant création:', {
+      circuit_id: newMission.value.circuit_id,
+      title: newMission.value.title,
+      fullForm: newMission.value
+    })
+
     // Préparer les données pour Laravel API
     const missionData = {
       title: newMission.value.title,
@@ -1113,20 +1219,34 @@ const createMission = async () => {
       longitude: newMission.value.longitude,
       threshold: newMission.value.threshold,
       hint: newMission.value.hint || null,
-      achievement_id: newMission.value.achievement?.id || null,
-      published: newMission.value.status === 'published'
+      achievement_id: newMission.value.achievement_id || null,
+      circuit_id: newMission.value.circuit_id ? parseInt(newMission.value.circuit_id) : null
     }
+
+    // Ajouter la question si elle existe
+    if (newMission.value.question) {
+      missionData.questions = [newMission.value.question]
+    }
+
+    console.log('🔄 Création de mission avec données:', missionData)
+    console.log('📋 Circuit ID envoyé:', missionData.circuit_id)
+    
     // Créer la mission via l'API Laravel
     const created = await createMissionApi(missionData)
     
     // Afficher une notification de succès
     console.log('Mission créée avec succès avec Laravel API')
+    alert('Mission créée avec succès !')
+    
     // Réinitialiser le formulaire
     clearForm()
     
+    // Fermer le formulaire
+    showAddForm.value = false
+    
   } catch (err) {
     console.error('Erreur lors de la création de la mission:', err)
-    // L'erreur est déjà gérée par le composable
+    alert(`Erreur lors de la création: ${err.message}`)
   } finally {
     isCreating.value = false
   }
@@ -1134,22 +1254,15 @@ const createMission = async () => {
 
 // Fonctions pour les actions sur les missions
 const editMission = (mission) => {
-  // Sauvegarder l'état de publication ORIGINAL
-  originalPublishedState.value = mission.published || false
-  
   // Réinitialiser l'onglet actif
   editActiveTab.value = 'infos'
   
   editingMission.value = { 
     ...mission,
-    published: mission.published || false,  // Utiliser le champ published de Laravel
-    // S'assurer que tous les champs optionnels existent
-    hint: mission.hint || '',
+    // S'assurer que tous les champs requis existent
+    circuit_id: mission.circuit_id || (mission.circuits && mission.circuits.length > 0 ? mission.circuits[0].id : null),
     achievement_id: mission.achievement_id || null,
-    achievement: mission.achievement || null,
-    // Pour les circuits, prendre le premier s'il y en a plusieurs
-    circuit_id: mission.circuits && mission.circuits.length > 0 ? mission.circuits[0].id : null,
-    circuits: mission.circuits || []
+    questions: mission.questions || []
   }
   showEditModal.value = true
 }
@@ -1163,31 +1276,24 @@ const saveEditMission = async () => {
     console.log('🔍 DEBUG - Mission à modifier (Laravel):', {
       id: editingMission.value.id,
       missionId: missionId,
-      wasPublished: editingMission.value.published || false,
-      wantsToPublish: editingMission.value.published,
       fullData: editingMission.value
     })
     
-    // IMPORTANT : Envoyer les champs selon le schéma Laravel
+    // Préparer les données selon le schéma Laravel
     const missionData = {
-      // Champs requis du schema Laravel
       title: editingMission.value.title,
       description: editingMission.value.description || '',
       latitude: editingMission.value.latitude,
       longitude: editingMission.value.longitude,
       threshold: editingMission.value.threshold,
-      
-      // Champs optionnels
       hint: editingMission.value.hint || null,
       achievement_id: editingMission.value.achievement_id || null,
-      
-      // Statut de publication Laravel
-      published: editingMission.value.published || false
+      circuit_id: editingMission.value.circuit_id ? parseInt(editingMission.value.circuit_id) : null
     }
     
     console.log('📦 DEBUG - Données envoyées à Laravel:', missionData)
     
-    // 1. Mise à jour de la mission via l'API Laravel
+    // Mise à jour de la mission via l'API Laravel
     const result = await updateMission(missionId, missionData)
     
     console.log('✅ DEBUG - Mission mise à jour:', result)
@@ -1195,8 +1301,7 @@ const saveEditMission = async () => {
     // Fermer la modal
     showEditModal.value = false
     editingMission.value = null
-    originalPublishedState.value = false
-    editActiveTab.value = 'infos' // Réinitialiser l'onglet actif
+    editActiveTab.value = 'infos'
     
     // Rafraîchir la liste des missions
     setTimeout(async () => {
@@ -1213,7 +1318,6 @@ const saveEditMission = async () => {
       response: err.response,
       stack: err.stack
     })
-    // Afficher un message d'erreur à l'utilisateur
     alert(`Erreur lors de la mise à jour de la mission: ${err.message}`)
   }
 }
@@ -1221,44 +1325,72 @@ const saveEditMission = async () => {
 const cancelEdit = () => {
   showEditModal.value = false
   editingMission.value = null
-  originalPublishedState.value = false
-  editActiveTab.value = 'infos' // Réinitialiser l'onglet actif
-}
-
-// Fonction pour sélectionner un achievement
-const selectAchievement = () => {
-  // Simulation d'une sélection d'achievement (à remplacer par une vraie modal/sélection)
-  newMission.value.achievement = {
-    name: 'Explorateur débutant',
-    experience: 100
-  }
-}
-
-// Fonction pour sélectionner un achievement dans le modal d'édition
-const selectEditAchievement = () => {
-  // Simulation d'une sélection d'achievement (à remplacer par une vraie modal/sélection)
-  editingMission.value.achievement = {
-    name: 'Explorateur débutant',
-    experience: 100
-  }
-}
-
-// Fonction utilitaire pour récupérer le nom du circuit
-const getCircuitName = (circuitId) => {
-  if (!circuitId) return 'Aucun'
-  const circuit = circuits.value.find(c => c.id === circuitId)
-  return circuit ? (circuit.name || `Circuit ${circuit.id}`) : 'Circuit inconnu'
+  editActiveTab.value = 'infos'
 }
 
 const handleDeleteMission = async (missionId) => {
   if (confirm('Êtes-vous sûr de vouloir supprimer cette mission ?')) {
-    await deleteMission(missionId)
+    try {
+      await deleteMission(missionId)
+      alert('Mission supprimée avec succès')
+    } catch (err) {
+      alert(`Erreur lors de la suppression: ${err.message}`)
+    }
   }
 }
 
 const refreshMissions = async () => {
   await fetchMissions()
   lastUpdated.value = new Date()
+}
+
+// Méthodes pour gérer l'affichage des circuits
+const toggleCircuitsList = (missionId) => {
+  // Fermer toutes les autres listes ouvertes
+  Object.keys(showCircuitsList.value).forEach(id => {
+    if (id !== missionId.toString()) {
+      showCircuitsList.value[id] = false
+    }
+  })
+  
+  // Toggle la liste pour cette mission
+  showCircuitsList.value[missionId] = !showCircuitsList.value[missionId]
+}
+
+const closeCircuitsList = () => {
+  Object.keys(showCircuitsList.value).forEach(id => {
+    showCircuitsList.value[id] = false
+  })
+}
+
+// Fermer les listes quand on clique ailleurs
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.relative')) {
+    closeCircuitsList()
+  }
+}
+
+// Méthode pour détacher un circuit d'une mission
+const handleDetachCircuit = async (missionId, circuitId, circuitName) => {
+  const confirmMessage = `Êtes-vous sûr de vouloir détacher le circuit "${circuitName || `Circuit ${circuitId}`}" de cette mission ?`
+  
+  if (confirm(confirmMessage)) {
+    try {
+      await detachCircuitFromMission(missionId, circuitId)
+      
+      // Fermer la liste des circuits après détachement
+      closeCircuitsList()
+      
+      // Message de succès
+      alert(`Circuit "${circuitName || `Circuit ${circuitId}`}" détaché avec succès !`)
+      
+      // Optionnel : rafraîchir la liste des missions pour être sûr
+      // await fetchMissions()
+      
+    } catch (err) {
+      alert(`Erreur lors du détachement du circuit: ${err.message}`)
+    }
+  }
 }
 </script>
 

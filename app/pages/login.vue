@@ -74,29 +74,6 @@
             {{ isLoading ? 'Connexion...' : 'Se connecter' }}
           </button>
         </form>
-
-        <!-- Séparateur -->
-        <div class="my-4 sm:my-6 relative text-gray-600 text-sm">
-          <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-200"></div>
-          </div>
-          <div class="relative flex justify-center bg-white px-4">
-            <span>Ou continuer avec</span>
-          </div>
-        </div>
-
-        <!-- Boutons OAuth -->
-        <div class="flex gap-2 sm:gap-3 mb-6 sm:mb-8">
-          <button class="flex-1 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-800 text-xs sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:border-gray-300 hover:bg-gray-50">
-            <span class="text-blue-500">Google</span>
-          </button>
-          <button class="flex-1 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-800 text-xs sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:border-gray-300 hover:bg-gray-50">
-            <span class="text-blue-600">Facebook</span>
-          </button>
-          <button class="flex-1 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg bg-white text-gray-800 text-xs sm:text-sm font-medium cursor-pointer transition-all duration-200 hover:border-gray-300 hover:bg-gray-50">
-            <span class="text-gray-800">Github</span>
-          </button>
-        </div>
       </div>
     </div>
     

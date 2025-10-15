@@ -19,49 +19,38 @@
         
         <!-- Stats Section -->
         <div class="mb-12 flex-shrink-0">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 me-32">
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             
             <!-- Total utilisateurs -->
-            <div class="bg-gray-100 rounded-lg p-6 hover:bg-gray-200 transition-colors duration-200 h-full flex flex-col justify-between">
-              <div>
-                <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3" style="font-family: 'Freeman', sans-serif;">
-                  {{ loading ? '...' : totalUsers }}
-                </div>
-                <div class="text-base lg:text-lg text-gray-600 leading-tight">Total<br>utilisateurs</div>
+            <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">
+                {{ loading ? '...' : totalUsers }}
               </div>
+              <div class="text-base lg:text-lg text-gray-600">Total utilisateurs</div>
             </div>
 
             <!-- Utilisateurs actifs -->
-            <div class="bg-gray-100 rounded-lg p-6 hover:bg-gray-200 transition-colors duration-200 h-full flex flex-col justify-between">
-              <div>
-                <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3" style="font-family: 'Freeman', sans-serif;">
-                  {{ loading ? '...' : activeUsers }}
-                </div>
-                <div class="text-base lg:text-lg text-gray-600 leading-tight">Utilisateurs<br>actifs</div>
+            <div class="bg-green-50 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-green-700 mb-2" style="font-family: 'Freeman', sans-serif;">
+                {{ loading ? '...' : activeUsers }}
               </div>
-              <div class="text-xs text-gray-500 mt-4">Confirmés et non bloqués</div>
+              <div class="text-base lg:text-lg text-green-600">Utilisateurs actifs</div>
             </div>
             
-            <!-- Utilisateurs en mission -->
-            <div class="bg-gray-100 rounded-lg p-6 hover:bg-gray-200 transition-colors duration-200 h-full flex flex-col justify-between">
-              <div>
-                <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3" style="font-family: 'Freeman', sans-serif;">
-                  {{ loading ? '...' : usersInMission }}
-                </div>
-                <div class="text-base lg:text-lg text-gray-600 leading-tight">En<br>mission</div>
+            <!-- Parcours en cours -->
+            <div class="bg-blue-50 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-blue-700 mb-2" style="font-family: 'Freeman', sans-serif;">
+                {{ loading ? '...' : usersInProgress }}
               </div>
-              <div class="text-xs text-gray-500 mt-4">Activité en cours</div>
+              <div class="text-base lg:text-lg text-blue-600">Parcours en cours</div>
             </div>
             
             <!-- XP total -->
-            <div class="bg-gray-100 rounded-lg p-6 hover:bg-gray-200 transition-colors duration-200 h-full flex flex-col justify-between">
-              <div>
-                <div class="text-3xl lg:text-4xl font-bold text-gray-900 mb-3" style="font-family: 'Freeman', sans-serif;">
-                  {{ loading ? '...' : totalExperience.toLocaleString('fr-FR') }}
-                </div>
-                <div class="text-base lg:text-lg text-gray-600 leading-tight">XP<br>total</div>
+            <div class="bg-purple-50 rounded-lg p-4 lg:p-6">
+              <div class="text-4xl lg:text-5xl font-bold text-purple-700 mb-2" style="font-family: 'Freeman', sans-serif;">
+                {{ loading ? '...' : totalExperience.toLocaleString('fr-FR') }}
               </div>
-              <div class="text-xs text-gray-500 mt-4">Expérience cumulée</div>
+              <div class="text-base lg:text-lg text-purple-600">XP total</div>
             </div>
             
           </div>
@@ -213,8 +202,8 @@
             <div class="mt-2 text-sm">
               <p><strong>Solutions possibles :</strong></p>
               <ul class="list-disc list-inside mt-1 space-y-1">
-                <li>Vérifiez que Strapi est démarré : <code class="bg-red-200 px-1 rounded">npm run develop</code></li>
-                <li>Connectez-vous en tant qu'administrateur dans Strapi : <code class="bg-red-200 px-1 rounded">http://localhost:1337/admin</code></li>
+                <li>Vérifiez que l'API Laravel est accessible</li>
+                <li>Connectez-vous en tant qu'administrateur</li>
                 <li>Vérifiez que votre token admin est valide (reconnectez-vous si nécessaire)</li>
               </ul>
             </div>
@@ -226,8 +215,8 @@
               <UiIcon name="warning" size="xl" class="mx-auto text-yellow-400 mb-3" />
               <h3 class="text-lg font-medium text-yellow-800 mb-1">Aucun utilisateur trouvé</h3>
               <p class="text-yellow-700">
-                Aucun utilisateur n'est enregistré dans votre base de données Strapi.
-                <br>Créez des utilisateurs dans l'interface d'administration de Strapi.
+                Aucun utilisateur n'est enregistré dans votre base de données.
+                <br>Créez des utilisateurs via l'API Laravel ou l'interface d'administration.
               </p>
             </div>
           </div>
@@ -325,11 +314,11 @@
                   
                   <!-- Activité actuelle -->
                   <div class="text-xs text-gray-500">
-                    <div v-if="user.current_mission?.title" class="truncate">
-                      🎯 {{ user.current_mission.title }}
+                    <div v-if="user.current_circuit_id && getCircuitName(user.current_circuit_id)" class="truncate">
+                      🗺️ {{ getCircuitName(user.current_circuit_id) }}
                     </div>
-                    <div v-else-if="user.current_circuit?.name" class="truncate">
-                      🗺️ {{ user.current_circuit.name }}
+                    <div v-else-if="user.current_circuit_id" class="text-red-500 truncate">
+                      ⚠️ Parcours supprimé
                     </div>
                     <div v-else class="text-gray-400">Aucune activité</div>
                   </div>
@@ -344,7 +333,7 @@
                       <UiIcon name="edit" size="sm" />
                     </button>
                     <button
-                      @click="handleDeleteUser(user.documentId || user.id)"
+                      @click="handleDeleteUser(user.id)"
                       class="text-red-600 hover:text-red-800 transition-colors duration-200 p-1.5 rounded hover:bg-red-50"
                       title="Supprimer"
                     >
@@ -493,10 +482,13 @@
 
 <script setup>
 import { computed } from 'vue'
-// import { useFilters } from '~/composables/useFilters'
-// import UserFilters from '~/components/filters/UserFilters.vue'
 
-// Head configuration pour les polices
+// Meta de la page
+definePageMeta({
+  title: 'Utilisateurs'
+})
+
+// Head configuration
 useHead({
   title: 'Gestion des utilisateurs - Urbex Chronicles',
   link: [
@@ -573,30 +565,16 @@ const getRoleLabel = (role) => {
   }
 }
 
-// Meta de la page
-definePageMeta({
-  title: 'Utilisateurs'
-})
-
-// Head configuration
-useHead({
-  title: 'Utilisateurs',
-  link: [
-    {
-      rel: 'preconnect',
-      href: 'https://fonts.googleapis.com'
-    },
-    {
-      rel: 'preconnect', 
-      href: 'https://fonts.gstatic.com',
-      crossorigin: ''
-    },
-    {
-      rel: 'stylesheet',
-      href: 'https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Freeman&display=swap'
-    }
-  ]
-})
+// Fonction pour récupérer le nom d'un circuit par son ID
+const getCircuitName = (circuitId) => {
+  if (!circuitId || !circuits.value) return null
+  
+  // Convertir les IDs en string pour la comparaison (au cas où il y aurait des différences de type)
+  const targetId = String(circuitId)
+  const circuit = circuits.value.find(c => String(c.id) === targetId)
+  
+  return circuit?.name || null
+}
 
 // Utilisation du composable pour la gestion des utilisateurs
 const { 
@@ -604,6 +582,7 @@ const {
   loading, 
   error, 
   fetchUsers, 
+  refreshUsers,
   updateUser,
   deleteUser,
   testConnection,
@@ -612,8 +591,12 @@ const {
   getUserExperience
 } = await useUsers()
 
-// Chargement initial des utilisateurs
+// Utilisation du composable pour la gestion des circuits
+const { circuits, fetchCircuits } = useCircuits()
+
+// Chargement initial des utilisateurs et circuits
 await fetchUsers()
+await fetchCircuits()
 
 // Système de filtres basé sur le schéma Strapi
 const searchTerm = ref('')
@@ -765,8 +748,12 @@ const activeUsers = computed(() => {
   return filteredUsers.value.filter(user => !user.blocked && user.confirmed).length
 })
 
-const usersInMission = computed(() => {
-  return filteredUsers.value.filter(user => user.current_mission || user.current_circuit).length
+const usersInProgress = computed(() => {
+  return filteredUsers.value.filter(user => {
+    return user.current_circuit_id !== null && 
+           user.current_circuit_id !== undefined && 
+           getCircuitName(user.current_circuit_id) !== null
+  }).length
 })
 
 const totalExperience = computed(() => {
@@ -804,8 +791,8 @@ const saveEditUser = async () => {
       blocked: editingUser.value.blocked
     }
     
-    // Utiliser documentId pour Strapi v5
-    const userIdToUse = editingUser.value.documentId || editingUser.value.id
+    // Utiliser l'ID pour Laravel API
+    const userIdToUse = editingUser.value.id
     console.log('🔄 Sauvegarde utilisateur avec ID:', userIdToUse, 'et données:', userData)
     
     await updateUser(userIdToUse, userData)
@@ -840,10 +827,6 @@ const handleDeleteUser = async (userId) => {
       }, 5000)
     }
   }
-}
-
-const refreshUsers = async () => {
-  await fetchUsers()
 }
 
 // Fonctions pour gérer les avatars

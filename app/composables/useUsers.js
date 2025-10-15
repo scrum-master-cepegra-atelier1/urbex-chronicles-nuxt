@@ -1,6 +1,5 @@
 /**
  * Composable pour la gestion des utilisateurs avec Laravel API
- * VERSION TEMPORAIRE - En attente des routes d'admin Laravel
  */
 import { ref, computed, readonly } from "vue";
 
@@ -18,7 +17,7 @@ export const useUsers = () => {
   });
 
   /**
-   * Récupérer tous les utilisateurs (VERSION TEMPORAIRE)
+   * Récupérer tous les utilisateurs
    */
   const fetchUsers = async () => {
     loading.value = true;
@@ -28,27 +27,24 @@ export const useUsers = () => {
       // Import de l'API Laravel
       const { laravelApi } = await import("../service/ApiService.js");
 
-      console.log(
-        "🚧 TEMPORAIRE - Récupération du profil utilisateur actuel seulement..."
+      console.log("Récupération de tous les utilisateurs...");
+
+      // Récupérer tous les utilisateurs depuis l'API (Admin requis)
+      const response = await laravelApi.get("/users");
+
+      console.log("Réponse Laravel users:", response);
+
+      // Laravel retourne directement la liste des utilisateurs
+      users.value = Array.isArray(response) ? response : response.data || [];
+
+      pagination.value.total = users.value.length;
+      pagination.value.pageCount = Math.ceil(
+        users.value.length / pagination.value.pageSize
       );
 
-      // Pour l'instant, on récupère juste l'utilisateur connecté
-      const response = await laravelApi.get("/auth/me");
-
-      console.log("Réponse Laravel me:", response);
-
-      // Simuler une liste avec juste l'utilisateur connecté
-      const currentUser = response;
-      users.value = [currentUser];
-
-      pagination.value.total = 1;
-      pagination.value.pageCount = 1;
-
-      console.log(
-        "🚧 TEMPORAIRE - 1 utilisateur récupéré (utilisateur connecté)"
-      );
+      console.log(`✅ ${users.value.length} utilisateur(s) récupéré(s)`);
     } catch (err) {
-      console.error("❌ Erreur récupération utilisateur:", err);
+      console.error("❌ Erreur récupération utilisateurs:", err);
       error.value = `Erreur: ${err.message}`;
       users.value = [];
     } finally {
@@ -58,45 +54,147 @@ export const useUsers = () => {
 
   // Autres méthodes temporairement désactivées
   const fetchUserById = async (userId) => {
-    console.warn(
-      "🚧 fetchUserById temporairement désactivé - Route Laravel nécessaire"
-    );
-    return null;
+    try {
+      // Import de l'API Laravel
+      const { laravelApi } = await import("../service/ApiService.js");
+
+      console.log(`Récupération de l'utilisateur ${userId}...`);
+
+      // Récupérer l'utilisateur spécifique via l'API (Token requis)
+      const response = await laravelApi.get(`/users/${userId}`);
+
+      console.log(`✅ Utilisateur ${userId} récupéré`);
+      return response;
+    } catch (err) {
+      console.error("❌ Erreur récupération utilisateur:", err);
+      error.value = `Erreur lors de la récupération: ${err.message}`;
+      return null;
+    }
   };
 
   const deleteUser = async (userId) => {
-    console.warn(
-      "🚧 deleteUser temporairement désactivé - Route Laravel nécessaire"
-    );
-    return false;
-  };
+    try {
+      // Import de l'API Laravel
+      const { laravelApi } = await import("../service/ApiService.js");
 
+      console.log(`Suppression de l'utilisateur ${userId}...`);
+
+      // Supprimer l'utilisateur via l'API (Admin requis)
+      await laravelApi.delete(`/admin/users/${userId}`);
+
+      // Mettre à jour la liste locale
+      users.value = users.value.filter((user) => user.id !== userId);
+
+      // Mettre à jour la pagination
+      pagination.value.total = users.value.length;
+      pagination.value.pageCount = Math.ceil(
+        users.value.length / pagination.value.pageSize
+      );
+
+      console.log(`✅ Utilisateur ${userId} supprimé avec succès`);
+      return true;
+    } catch (err) {
+      console.error("❌ Erreur suppression utilisateur:", err);
+      error.value = `Erreur lors de la suppression: ${err.message}`;
+      return false;
+    }
+  };
   const updateUser = async (userId, userData) => {
-    console.warn(
-      "🚧 updateUser temporairement désactivé - Route Laravel nécessaire"
-    );
-    return null;
+    try {
+      // Import de l'API Laravel
+      const { laravelApi } = await import("../service/ApiService.js");
+
+      console.log(`Mise à jour de l'utilisateur ${userId}...`, userData);
+
+      // Mettre à jour l'utilisateur via l'API (Token requis)
+      const response = await laravelApi.put(`/users/${userId}`, userData);
+
+      // Mettre à jour la liste locale
+      const userIndex = users.value.findIndex((user) => user.id === userId);
+      if (userIndex !== -1) {
+        users.value[userIndex] = { ...users.value[userIndex], ...response };
+      }
+
+      console.log(`✅ Utilisateur ${userId} mis à jour avec succès`);
+      return response;
+    } catch (err) {
+      console.error("❌ Erreur mise à jour utilisateur:", err);
+      error.value = `Erreur lors de la mise à jour: ${err.message}`;
+      return null;
+    }
   };
 
   const createUser = async (userData) => {
-    console.warn(
-      "🚧 createUser temporairement désactivé - Route Laravel nécessaire"
-    );
-    return null;
+    try {
+      // Import de l'API Laravel
+      const { laravelApi } = await import("../service/ApiService.js");
+
+      console.log("Création d'un nouvel utilisateur...", userData);
+
+      // Créer l'utilisateur via l'API (Admin requis)
+      const response = await laravelApi.post("/admin/users", userData);
+
+      // Ajouter le nouvel utilisateur à la liste locale
+      users.value.push(response);
+
+      // Mettre à jour la pagination
+      pagination.value.total = users.value.length;
+      pagination.value.pageCount = Math.ceil(
+        users.value.length / pagination.value.pageSize
+      );
+
+      console.log("✅ Utilisateur créé avec succès");
+      return response;
+    } catch (err) {
+      console.error("❌ Erreur création utilisateur:", err);
+      error.value = `Erreur lors de la création: ${err.message}`;
+      return null;
+    }
   };
 
   const searchUsers = async (query) => {
-    console.warn(
-      "🚧 searchUsers temporairement désactivé - Route Laravel nécessaire"
-    );
-    return [];
+    try {
+      searchLoading.value = true;
+
+      // Import de l'API Laravel
+      const { laravelApi } = await import("../service/ApiService.js");
+
+      console.log(`Recherche d'utilisateurs: "${query}"`);
+
+      // Pour l'instant, faire la recherche côté client
+      // TODO: Implémenter la recherche côté serveur si l'API le supporte
+      const filtered = users.value.filter(
+        (user) =>
+          user.username?.toLowerCase().includes(query.toLowerCase()) ||
+          user.email?.toLowerCase().includes(query.toLowerCase()) ||
+          user.role?.toLowerCase().includes(query.toLowerCase())
+      );
+
+      console.log(`✅ ${filtered.length} utilisateur(s) trouvé(s)`);
+      return filtered;
+    } catch (err) {
+      console.error("❌ Erreur recherche utilisateurs:", err);
+      error.value = `Erreur lors de la recherche: ${err.message}`;
+      return [];
+    } finally {
+      searchLoading.value = false;
+    }
   };
 
   const getTotalUsers = async () => {
-    console.warn(
-      "🚧 getTotalUsers temporairement désactivé - Route Laravel nécessaire"
-    );
-    return 1;
+    try {
+      // Si on a déjà des utilisateurs chargés, retourner le nombre
+      if (users.value.length > 0) {
+        return users.value.length;
+      }
+
+      // Sinon, faire un appel API pour obtenir le total
+      await fetchUsers();
+      return users.value.length;
+    } catch (err) {
+      console.error("❌ Erreur récupération total utilisateurs:", err);
+      return 0;
+    }
   };
 
   // États calculés
@@ -104,6 +202,11 @@ export const useUsers = () => {
   const hasError = computed(() => !!error.value);
   const hasUsers = computed(() => users.value.length > 0);
   const userCount = computed(() => users.value.length);
+
+  // Méthode de rafraîchissement
+  const refreshUsers = async () => {
+    await fetchUsers();
+  };
 
   return {
     // États
@@ -121,6 +224,7 @@ export const useUsers = () => {
 
     // Actions
     fetchUsers,
+    refreshUsers,
     fetchUserById,
     deleteUser,
     updateUser,

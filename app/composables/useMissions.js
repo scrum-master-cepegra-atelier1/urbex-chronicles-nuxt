@@ -12,23 +12,52 @@ export default async function useMissions() {
   const loading = ref(false);
   const error = ref(null);
 
-  // Computed properties pour les statistiques
+  // Computed properties pour les statistiques basées sur les types de questions
   const totalMissions = computed(() => missions.value.length);
 
-  const publishedMissions = computed(
-    () => missions.value.filter((mission) => mission.published).length
-  );
+  // Compteurs pour chaque type de question
+  const qcmQuestions = computed(() => {
+    return missions.value.reduce((count, mission) => {
+      return (
+        count + (mission.questions || []).filter((q) => q.type === "qcm").length
+      );
+    }, 0);
+  });
 
-  const draftMissions = computed(
-    () => missions.value.filter((mission) => !mission.published).length
-  );
+  const enigmeQuestions = computed(() => {
+    return missions.value.reduce((count, mission) => {
+      return (
+        count +
+        (mission.questions || []).filter((q) => q.type === "enigme").length
+      );
+    }, 0);
+  });
 
-  const modifiedMissions = computed(
-    () =>
-      missions.value.filter(
-        (mission) => getMissionStatus(mission) === "modified"
-      ).length
-  );
+  const qrQuestions = computed(() => {
+    return missions.value.reduce((count, mission) => {
+      return (
+        count + (mission.questions || []).filter((q) => q.type === "qr").length
+      );
+    }, 0);
+  });
+
+  const vue360Questions = computed(() => {
+    return missions.value.reduce((count, mission) => {
+      return (
+        count +
+        (mission.questions || []).filter((q) => q.type === "vue360").length
+      );
+    }, 0);
+  });
+
+  const autreQuestions = computed(() => {
+    return missions.value.reduce((count, mission) => {
+      return (
+        count +
+        (mission.questions || []).filter((q) => q.type === "autre").length
+      );
+    }, 0);
+  });
 
   /**
    * Récupérer toutes les missions depuis Laravel API
@@ -49,47 +78,19 @@ export default async function useMissions() {
       let missionData = response.missions || response.data || response;
 
       if (Array.isArray(missionData)) {
-        missions.value = missionData.map((mission) => ({
-          // Identifiants
-          id: mission.id,
-          // Champs requis du schema Laravel
-          title: mission.title || "Mission sans titre",
-          description: mission.description || "",
-          latitude: mission.latitude || null,
-          longitude: mission.longitude || null,
-          threshold: mission.threshold || null,
-          // Champs optionnels du schema
-          hint: mission.hint || null,
-          achievement_id: mission.achievement_id || null,
-          // Pour circuit_id, prendre le premier circuit s'il existe
-          circuit_id:
-            mission.circuits && mission.circuits.length > 0
-              ? mission.circuits[0].id
-              : null,
-          // Relations (si incluses dans la réponse)
-          achievement: mission.achievement || null,
-          circuit:
-            mission.circuits && mission.circuits.length > 0
-              ? mission.circuits[0]
-              : null,
-          circuits: mission.circuits || [], // Garder aussi la liste complète
-          questions: mission.questions || [],
-          // Métadonnées Laravel
-          published: mission.published || false,
-          published_at: mission.published_at || null,
-          created_at: mission.created_at,
-          updated_at: mission.updated_at,
-          // Calculer le statut Laravel
-          status: !mission.published ? "draft" : "published",
-        }));
-        console.log(
-          `✅ ${missions.value.length} missions récupérées avec succès`
-        );
-        console.log("🔍 Structure d'une mission:", missions.value[0]);
+        missions.value = missionData;
+      } else if (response.missions && Array.isArray(response.missions)) {
+        // Si les données arrivent sous la forme { missions: [...] }
+        missions.value = response.missions;
       } else {
-        console.warn("⚠️ Structure de réponse inattendue:", response);
+        console.warn("⚠️ Format de réponse inattendu:", response);
         missions.value = [];
       }
+
+      console.log(
+        `✅ ${missions.value.length} missions récupérées avec succès`
+      );
+      console.log("🔍 Structure d'une mission:", missions.value[0]);
       error.value = null;
     } catch (err) {
       console.error("❌ Erreur lors de la récupération des missions:", err);
@@ -153,6 +154,7 @@ export default async function useMissions() {
         threshold: missionData.threshold || null,
         hint: missionData.hint || null,
         achievement_id: missionData.achievement_id || null,
+        circuit_id: missionData.circuit_id || null,
         // Inclure les questions si fournies
         questions: missionData.questions || [],
       };
@@ -202,6 +204,7 @@ export default async function useMissions() {
         threshold: missionData.threshold || null,
         hint: missionData.hint || null,
         achievement_id: missionData.achievement_id || null,
+        circuit_id: missionData.circuit_id || null,
         // Inclure les questions si fournies
         questions: missionData.questions || [],
       };
@@ -466,6 +469,48 @@ export default async function useMissions() {
     };
   };
 
+  /**
+   * Détacher un circuit d'une mission (Admin)
+   */
+  const detachCircuitFromMission = async (missionId, circuitId) => {
+    try {
+      const { laravelApi } = await import("../service/ApiService.js");
+
+      console.log(
+        `🔄 Détachement du circuit ${circuitId} de la mission ${missionId}...`
+      );
+
+      const response = await laravelApi.post(
+        `/admin/missions/${missionId}/detach-circuit`,
+        { circuit_id: circuitId }
+      );
+
+      console.log(
+        `✅ Circuit ${circuitId} détaché avec succès de la mission ${missionId}`
+      );
+
+      // Mettre à jour dans la liste locale
+      const missionIndex = missions.value.findIndex(
+        (mission) => mission.id === missionId
+      );
+      if (missionIndex !== -1 && missions.value[missionIndex].circuits) {
+        missions.value[missionIndex].circuits = missions.value[
+          missionIndex
+        ].circuits.filter((circuit) => circuit.id !== circuitId);
+        console.log("✅ Liste locale mise à jour");
+      }
+
+      return response.data || response;
+    } catch (err) {
+      console.error(
+        `❌ Erreur lors du détachement du circuit ${circuitId} de la mission ${missionId}:`,
+        err
+      );
+      error.value = `Impossible de détacher le circuit: ${err.message}`;
+      throw err;
+    }
+  };
+
   // Retourner l'API publique
   return {
     // États (readonly pour éviter les mutations directes)
@@ -475,9 +520,11 @@ export default async function useMissions() {
 
     // Computed properties
     totalMissions,
-    publishedMissions,
-    draftMissions,
-    modifiedMissions,
+    qcmQuestions,
+    enigmeQuestions,
+    qrQuestions,
+    vue360Questions,
+    autreQuestions,
 
     // Actions
     fetchMissions,
@@ -490,6 +537,7 @@ export default async function useMissions() {
     searchMissions,
     testConnection,
     toggleMissionStatus,
+    detachCircuitFromMission,
 
     // Utilitaires
     formatDate,
