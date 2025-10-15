@@ -1,6 +1,6 @@
 /**
  * Admin route middleware
- * Ensures the user is authenticated as a Strapi admin
+ * Ensures the user is authenticated as a Laravel admin
  */
 
 // Nuxt auto-imports defineNuxtRouteMiddleware & navigateTo
@@ -17,12 +17,12 @@ export default defineNuxtRouteMiddleware(async (_to, _from) => {
   try {
     const isAdmin = await AuthService.isAuthenticatedAdmin()
     if (!isAdmin) {
-      AuthService.logout()
+      await AuthService.logout()
       return navigateTo("/login")
     }
   } catch (err) {
     console.error("Admin verification failed:", err)
-    AuthService.logout()
+    await AuthService.logout()
     return navigateTo("/login")
   }
 })

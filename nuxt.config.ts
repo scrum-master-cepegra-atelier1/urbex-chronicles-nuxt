@@ -9,6 +9,18 @@ export default defineNuxtConfig({
     '@/assets/css/tailwind.css',
     '@/assets/style/main.scss'
   ],
+  runtimeConfig: {
+    public: {
+      // Configuration API Laravel
+      laravel: {
+        baseUrl: process.env.VITE_LARAVEL_BASE_URL || 'http://127.0.0.1:8000/api',
+        token: process.env.VITE_LARAVEL_TOKEN || ''
+      },
+      api: {
+        baseUrl: process.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api'
+      }
+    }
+  },
   alias: {
     "~": "./app",
     "@": "./app"

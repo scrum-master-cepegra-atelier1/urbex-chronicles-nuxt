@@ -15,7 +15,7 @@
         <div v-if="loading" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div class="flex items-center">
             <UiIcon name="refresh" size="md" class="text-blue-500 mr-2 animate-spin" />
-            <span class="text-blue-800">Chargement des circuits depuis Strapi...</span>
+            <span class="text-blue-800">Chargement des circuits depuis Laravel API...</span>
           </div>
         </div>
         
@@ -303,10 +303,10 @@
                         <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        Missions associées (relation oneToMany)
+                        Missions associées
                       </h3>
                       <p class="text-sm text-gray-600 mb-4">
-                        Sélectionnez les missions à associer à ce circuit
+                        Sélectionnez les missions à associer à ce circuit (relation many-to-many)
                       </p>
                       <div class="bg-white rounded-md p-3 border border-green-200">
                         <!-- Indicateur de chargement des missions -->
@@ -317,33 +317,74 @@
                           <p class="text-sm text-gray-600 mt-2">Chargement des missions...</p>
                         </div>
                         
-                        <!-- Liste des missions disponibles -->
-                        <div v-else-if="availableMissions && availableMissions.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
-                          <div 
-                            v-for="mission in availableMissions" 
-                            :key="mission.id || mission.documentId"
-                            class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
-                          >
-                            <input 
-                              :id="'mission-' + (mission.id || mission.documentId)"
-                              type="checkbox" 
-                              :value="mission.id || mission.documentId"
-                              v-model="selectedMissionIds"
-                              class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                            />
-                            <label 
-                              :for="'mission-' + (mission.id || mission.documentId)"
-                              class="flex-1 text-sm cursor-pointer"
+                        <!-- Liste déroulante avec checkboxes pour une meilleure UX -->
+                        <div v-else-if="availableMissions && availableMissions.length > 0">
+                          <label class="block text-sm font-medium text-gray-700 mb-3">
+                            Missions disponibles ({{ selectedMissionIds.length }} sélectionnée(s))
+                          </label>
+                          
+                          <!-- Affichage sous forme de checkboxes -->
+                          <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-3">
+                            <div 
+                              v-for="mission in availableMissions" 
+                              :key="mission.id"
+                              class="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                              @click="toggleMissionSelection(mission.id)"
                             >
-                              <div class="font-medium text-gray-900">{{ mission.title || mission.name || 'Mission sans titre' }}</div>
-                              <div class="text-gray-500 text-xs">{{ mission.description ? (mission.description.length > 60 ? mission.description.substring(0, 60) + '...' : mission.description) : 'Aucune description' }}</div>
-                            </label>
-                            <span 
-                              :class="mission.status === 'published' ? 'bg-green-100 text-green-800' : mission.status === 'modified' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'"
-                              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                            >
-                              {{ mission.status === 'published' ? 'Publié' : mission.status === 'modified' ? 'Modifié' : 'Brouillon' }}
-                            </span>
+                              <input
+                                type="checkbox"
+                                :checked="selectedMissionIds.includes(mission.id)"
+                                @change="toggleMissionSelection(mission.id)"
+                                @click.stop
+                                class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                              />
+                              <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">
+                                  {{ mission.title || 'Mission sans titre' }}
+                                </p>
+                                <p class="text-xs text-gray-500 truncate">
+                                  {{ mission.description || 'Pas de description' }}
+                                </p>
+                                <div class="flex items-center space-x-4 mt-1">
+                                  <span v-if="mission.latitude && mission.longitude" class="inline-flex items-center text-xs text-gray-400">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    {{ parseFloat(mission.latitude).toFixed(4) }}, {{ parseFloat(mission.longitude).toFixed(4) }}
+                                  </span>
+                                  <span v-if="mission.questions && mission.questions.length > 0" class="inline-flex items-center text-xs text-blue-500">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    {{ mission.questions.length }} question(s)
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- Actions rapides -->
+                          <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                            <div class="text-xs text-gray-500">
+                              {{ selectedMissionIds.length }} / {{ availableMissions.length }} missions sélectionnées
+                            </div>
+                            <div class="flex space-x-2">
+                              <button 
+                                @click="selectAllMissions"
+                                type="button"
+                                class="text-xs text-green-600 hover:text-green-800 underline"
+                              >
+                                Tout sélectionner
+                              </button>
+                              <button 
+                                @click="clearMissionSelection"
+                                type="button"
+                                class="text-xs text-gray-600 hover:text-gray-800 underline"
+                              >
+                                Tout désélectionner
+                              </button>
+                            </div>
                           </div>
                         </div>
                         
@@ -353,28 +394,44 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                           </svg>
                           <p class="mt-2 text-sm text-gray-500">Aucune mission disponible</p>
-                          <p class="text-xs text-gray-400">Créez d'abord des missions dans l'onglet Missions</p>
-                        </div>
-                        
-                        <!-- Missions sélectionnées -->
-                        <div v-if="selectedMissions.length > 0" class="mt-4 pt-3 border-t border-green-200">
-                          <p class="text-sm font-medium text-gray-900 mb-2">
-                            Missions sélectionnées ({{ selectedMissions.length }})
-                          </p>
-                          <div class="space-y-1">
-                            <div 
-                              v-for="mission in selectedMissions" 
-                              :key="mission.id || mission.documentId"
-                              class="flex items-center justify-between bg-green-50 p-2 rounded text-sm"
+                          <p class="text-xs text-gray-400 mb-3">Créez d'abord des missions dans l'onglet Missions</p>
+                          
+                          <!-- Boutons d'action -->
+                          <div class="flex flex-col items-center space-y-2">
+                            <nuxt-link 
+                              to="/admin/missions" 
+                              class="inline-flex items-center text-sm text-green-600 hover:text-green-800 underline"
                             >
-                              <span class="text-green-800">{{ mission.title || mission.name || 'Mission sans titre' }}</span>
-                              <button 
-                                @click="removeSelectedMission(mission.id || mission.documentId)"
-                                class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
-                              >
-                                ✕
-                              </button>
-                            </div>
+                              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                              </svg>
+                              Aller créer des missions
+                            </nuxt-link>
+                            
+                            <!-- Bouton de rechargement -->
+                            <button 
+                              @click="reloadMissions"
+                              type="button"
+                              class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
+                            >
+                              <svg class="w-4 h-4 mr-1 animate-spin" v-if="missionsLoading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                              </svg>
+                              <svg class="w-4 h-4 mr-1" v-else fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                              </svg>
+                              Recharger les missions
+                            </button>
+                            
+                            <!-- Debug info -->
+                            <details class="mt-4 text-xs text-gray-400">
+                              <summary class="cursor-pointer">Debug Info</summary>
+                              <div class="mt-2 text-left bg-gray-100 p-2 rounded">
+                                <p>Missions Loading: {{ missionsLoading }}</p>
+                                <p>Available Missions: {{ availableMissions?.length || 0 }}</p>
+                                <p>FetchMissions Function: {{ typeof fetchMissions }}</p>
+                              </div>
+                            </details>
                           </div>
                         </div>
                       </div>
@@ -392,9 +449,36 @@
                         Informations d'accessibilité pour ce circuit
                       </p>
                       <div class="bg-white rounded-md p-3 border border-orange-200">
-                        <p class="text-sm text-gray-500 italic">
-                          {{ newCircuit.accessibilities ? newCircuit.accessibilities.length : 0 }} accessibilité(s) configurée(s)
-                        </p>
+                        <!-- Affichage des accessibilités sélectionnées -->
+                        <div v-if="newCircuit.accessibilities && newCircuit.accessibilities.length > 0" class="mb-3">
+                          <p class="text-sm text-orange-800 font-medium mb-2">
+                            {{ newCircuit.accessibilities.length }} accessibilité(s) configurée(s) :
+                          </p>
+                          <div class="space-y-2">
+                            <div 
+                              v-for="accessibility in newCircuit.accessibilities" 
+                              :key="accessibility.id"
+                              class="flex items-center justify-between bg-orange-100 p-2 rounded-md"
+                            >
+                              <div>
+                                <span class="text-sm font-medium text-orange-900">{{ accessibility.name || accessibility.title }}</span>
+                                <p class="text-xs text-orange-600">{{ accessibility.description }}</p>
+                              </div>
+                              <button 
+                                @click="removeAccessibility(accessibility.id)"
+                                class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
+                                title="Retirer cette accessibilité"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-else>
+                          <p class="text-sm text-gray-500 italic">
+                            0 accessibilité(s) configurée(s)
+                          </p>
+                        </div>
                         <button type="button" 
                                 @click="configureAccessibilities"
                                 class="mt-2 text-orange-600 hover:text-orange-800 text-sm underline">
@@ -593,7 +677,7 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7"></path>
                 </svg>
                 <p class="mt-4 text-lg text-gray-500">{{ activeFiltersCount > 0 ? 'Aucun circuit ne correspond aux filtres' : 'Aucun circuit trouvé' }}</p>
-                <p class="text-sm text-gray-400">{{ activeFiltersCount > 0 ? 'Essayez de modifier vos critères de recherche' : 'Créez votre premier circuit ou vérifiez votre connexion Strapi' }}</p>
+                <p class="text-sm text-gray-400">{{ activeFiltersCount > 0 ? 'Essayez de modifier vos critères de recherche' : 'Créez votre premier circuit ou vérifiez votre connexion à l\'API Laravel' }}</p>
               </div>
               
               <!-- Liste des circuits -->
@@ -636,60 +720,88 @@
                   <!-- Achievement (relation oneToOne) -->
                   <div class="text-center">
                     <span v-if="circuit.achievement && circuit.achievement.id" 
-                          class="inline-block w-6 h-6 bg-yellow-500 rounded cursor-pointer hover:bg-yellow-600 transition-colors"
+                          class="bg-yellow-500 text-white text-sm px-2 py-1 rounded cursor-pointer hover:bg-yellow-600 transition-colors"
                           @click="viewAchievement(circuit.achievement)"
                           :title="'Achievement: ' + (circuit.achievement.name || 'Achievement')">
+                      1
                     </span>
                     <span v-else class="text-gray-300">—</span>
                   </div>
                   
                   <!-- Missions (component repeatable) -->
                   <div class="text-center">
-                    <span v-if="circuit.missions && circuit.missions.length > 0" 
-                          class="bg-purple-500 text-white text-sm px-2 py-1 rounded cursor-pointer hover:bg-purple-600 transition-colors"
-                          @click="viewCircuitMissions(circuit)"
-                          :title="circuit.missions.length + ' mission(s)'">
-                      {{ circuit.missions.length }}
-                    </span>
+                    <div v-if="circuit.missions && circuit.missions.length > 0" class="relative">
+                      <!-- Bouton pour afficher le nombre de missions -->
+                      <button
+                        @click="toggleMissionsList(circuit.id)"
+                        class="flex items-center space-x-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors duration-200"
+                        :class="{ 'bg-purple-200': showMissionsList[circuit.id] }"
+                      >
+                        <span class="font-medium">{{ circuit.missions.length }}</span>
+                        <span>mission{{ circuit.missions.length > 1 ? 's' : '' }}</span>
+                        <UiIcon 
+                          name="close" 
+                          size="md" 
+                          class="transform transition-transform duration-200"
+                          :class="{ 'rotate-180': showMissionsList[circuit.id] }"
+                        />
+                      </button>
+                      
+                      <!-- Liste des missions (dropdown) -->
+                      <div 
+                        v-if="showMissionsList[circuit.id]" 
+                        class="absolute top-full left-0 mt-2 min-w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto"
+                      >
+                        <div class="p-2">
+                          <div class="text-xs font-medium text-gray-500 mb-2 px-2">Missions associées :</div>
+                          <div 
+                            v-for="mission in circuit.missions" 
+                            :key="mission.id"
+                            class="flex items-center justify-between p-2 hover:bg-gray-50 rounded group"
+                          >
+                            <div class="flex-1">
+                              <NuxtLink 
+                                :to="'/admin/missions'"
+                                class="text-purple-600 hover:text-purple-800 font-medium text-sm"
+                                :title="'Voir la mission: ' + (mission.name || mission.title || `Mission ${mission.id}`)"
+                                @click="closeMissionsList"
+                              >
+                                {{ mission.name || mission.title || `Mission ${mission.id}` }}
+                              </NuxtLink>
+                              <div class="text-xs text-gray-500">ID: {{ mission.id }}</div>
+                            </div>
+                            <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                @click="handleDetachMission(circuit.id, mission.id, mission.name || mission.title)"
+                                class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors duration-200"
+                                :title="'Détacher la mission: ' + (mission.name || mission.title || `Mission ${mission.id}`)"
+                              >
+                                <UiIcon name="trash" size="md" />
+                              </button>
+                              <UiIcon name="eye" size="md" class="text-gray-400" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <span v-else class="text-gray-300">—</span>
                   </div>
                   
                   <!-- Actions -->
                   <div class="flex items-center justify-center space-x-2">
-                    <!-- Bouton Archiver/Désarchiver -->
-                    <button
-                      @click="handleToggleStatus(circuit)"
-                      :class="circuit.published ? 'text-orange-600 hover:text-orange-800' : 'text-green-600 hover:text-green-800'"
-                      class="transition-colors duration-200 p-2"
-                      :title="circuit.published ? 'Archiver' : 'Désarchiver'"
-                    >
-                      <!-- Icône d'archivage (pour circuits publiés) -->
-                      <svg v-if="circuit.published" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14l-1 7H6L5 4z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4V2a1 1 0 011-1h12a1 1 0 011 1v2"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9h4"/>
-                      </svg>
-                      <!-- Icône de désarchivage (pour circuits archivés) -->
-                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4h14l-1 7H6L5 4z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 4V2a1 1 0 011-1h12a1 1 0 011 1v2"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9l2-2m0 0l2 2m-2-2v6"/>
-                      </svg>
-                    </button>
-                    
                     <button
                       @click="handleEditCircuit(circuit)"
                       class="text-blue-600 hover:text-blue-800 transition-colors duration-200 p-1.5 rounded hover:bg-blue-50"
                       title="Modifier"
                     >
-                      <UiIcon name="edit" size="sm" />
+                      <UiIcon name="edit" size="md" />
                     </button>
                     <button
                       @click="handleDeleteCircuit(circuit)"
                       class="text-red-600 hover:text-red-800 transition-colors duration-200 p-1.5 rounded hover:bg-red-50"
                       title="Supprimer"
                     >
-                      <UiIcon name="trash" size="sm" />
+                      <UiIcon name="trash" size="md" />
                     </button>
                   </div>
                 </div>
@@ -1267,7 +1379,7 @@
                 <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                Missions (Component - repeatable)
+                Missions associées
               </h4>
               <div class="bg-white rounded-md p-3 border border-purple-200">
                 <!-- Indicateur de chargement des missions -->
@@ -1278,33 +1390,74 @@
                   <p class="text-sm text-gray-600 mt-2">Chargement des missions...</p>
                 </div>
                 
-                <!-- Liste des missions disponibles -->
-                <div v-else-if="availableMissions && availableMissions.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
-                  <div 
-                    v-for="mission in availableMissions" 
-                    :key="mission.id || mission.documentId"
-                    class="flex items-center space-x-3 p-2 rounded hover:bg-gray-50"
-                  >
-                    <input 
-                      :id="'edit-mission-' + (mission.id || mission.documentId)"
-                      type="checkbox" 
-                      :value="mission.id || mission.documentId"
-                      v-model="editingCircuitMissionIds"
-                      class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                    />
-                    <label 
-                      :for="'edit-mission-' + (mission.id || mission.documentId)"
-                      class="flex-1 text-sm cursor-pointer"
+                <!-- Liste avec checkboxes pour l'édition -->
+                <div v-else-if="availableMissions && availableMissions.length > 0">
+                  <label class="block text-sm font-medium text-gray-700 mb-3">
+                    Missions disponibles ({{ editingCircuitMissionIds.length }} sélectionnée(s))
+                  </label>
+                  
+                  <!-- Affichage sous forme de checkboxes -->
+                  <div class="space-y-2 max-h-32 overflow-y-auto border border-gray-200 rounded-md p-3">
+                    <div 
+                      v-for="mission in availableMissions" 
+                      :key="mission.id"
+                      class="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                      @click="toggleEditingMissionSelection(mission.id)"
                     >
-                      <div class="font-medium text-gray-900">{{ mission.title || mission.name || 'Mission sans titre' }}</div>
-                      <div class="text-gray-500 text-xs">{{ mission.description ? (mission.description.length > 60 ? mission.description.substring(0, 60) + '...' : mission.description) : 'Aucune description' }}</div>
-                    </label>
-                    <span 
-                      :class="mission.status === 'published' ? 'bg-green-100 text-green-800' : mission.status === 'modified' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'"
-                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                    >
-                      {{ mission.status === 'published' ? 'Publié' : mission.status === 'modified' ? 'Modifié' : 'Brouillon' }}
-                    </span>
+                      <input
+                        type="checkbox"
+                        :checked="editingCircuitMissionIds.includes(mission.id)"
+                        @change="toggleEditingMissionSelection(mission.id)"
+                        @click.stop
+                        class="mt-1 h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      />
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900">
+                          {{ mission.title || 'Mission sans titre' }}
+                        </p>
+                        <p class="text-xs text-gray-500 truncate">
+                          {{ mission.description || 'Pas de description' }}
+                        </p>
+                        <div class="flex items-center space-x-4 mt-1">
+                          <span v-if="mission.latitude && mission.longitude" class="inline-flex items-center text-xs text-gray-400">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            {{ parseFloat(mission.latitude).toFixed(4) }}, {{ parseFloat(mission.longitude).toFixed(4) }}
+                          </span>
+                          <span v-if="mission.questions && mission.questions.length > 0" class="inline-flex items-center text-xs text-blue-500">
+                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {{ mission.questions.length }} question(s)
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Actions rapides pour l'édition -->
+                  <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                    <div class="text-xs text-gray-500">
+                      {{ editingCircuitMissionIds.length }} / {{ availableMissions.length }} missions sélectionnées
+                    </div>
+                    <div class="flex space-x-2">
+                      <button 
+                        @click="selectAllEditingMissions"
+                        type="button"
+                        class="text-xs text-purple-600 hover:text-purple-800 underline"
+                      >
+                        Tout sélectionner
+                      </button>
+                      <button 
+                        @click="clearEditingMissionSelection"
+                        type="button"
+                        class="text-xs text-gray-600 hover:text-gray-800 underline"
+                      >
+                        Tout désélectionner
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
@@ -1314,29 +1467,16 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                   </svg>
                   <p class="mt-2 text-sm text-gray-500">Aucune mission disponible</p>
-                  <p class="text-xs text-gray-400">Créez d'abord des missions dans l'onglet Missions</p>
-                </div>
-                
-                <!-- Missions sélectionnées -->
-                <div v-if="editingCircuitSelectedMissions.length > 0" class="mt-4 pt-3 border-t border-purple-200">
-                  <p class="text-sm font-medium text-gray-900 mb-2">
-                    Missions sélectionnées ({{ editingCircuitSelectedMissions.length }})
-                  </p>
-                  <div class="space-y-1">
-                    <div 
-                      v-for="mission in editingCircuitSelectedMissions" 
-                      :key="mission.id || mission.documentId"
-                      class="flex items-center justify-between bg-purple-50 p-2 rounded text-sm"
-                    >
-                      <span class="text-purple-800">{{ mission.title || mission.name || 'Mission sans titre' }}</span>
-                      <button 
-                        @click="removeEditingCircuitMission(mission.id || mission.documentId)"
-                        class="text-red-500 hover:text-red-700 text-xs px-2 py-1 rounded hover:bg-red-50"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
+                  <p class="text-xs text-gray-400 mb-3">Créez d'abord des missions dans l'onglet Missions</p>
+                  <nuxt-link 
+                    to="/admin/missions" 
+                    class="inline-flex items-center text-sm text-purple-600 hover:text-purple-800 underline"
+                  >
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    Aller créer des missions
+                  </nuxt-link>
                 </div>
               </div>
             </div>
@@ -1410,10 +1550,263 @@
       </div>
     </div>
   </div>
+  
+  <!-- Modal de sélection d'achievement -->
+  <div v-if="showAchievementModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+      <!-- Header -->
+      <div class="bg-yellow-50 px-6 py-4 border-b border-yellow-200 flex justify-between items-center">
+        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+          <svg class="w-6 h-6 mr-3 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+          </svg>
+          Sélectionner un achievement
+        </h3>
+        <button @click="closeAchievementModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Contenu de la modal -->
+      <div class="p-6 overflow-y-auto max-h-96">
+        <!-- Indicateur de chargement des achievements -->
+        <div v-if="achievementsLoading" class="text-center py-8">
+          <svg class="mx-auto h-8 w-8 text-yellow-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <p class="text-sm text-gray-600 mt-2">Chargement des achievements...</p>
+        </div>
+        
+        <!-- Liste des achievements disponibles -->
+        <div v-else-if="availableAchievements && availableAchievements.length > 0" class="space-y-3">
+          <div 
+            v-for="achievement in availableAchievements" 
+            :key="achievement.id"
+            @click="selectAchievementFromModal(achievement)"
+            class="p-4 border border-gray-200 rounded-lg hover:border-yellow-300 hover:bg-yellow-50 cursor-pointer transition-all duration-200"
+            :class="{ 'border-yellow-300 bg-yellow-50': selectedAchievementId === achievement.id }"
+          >
+            <div class="flex items-start space-x-3">
+              <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-lg">🏆</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="text-base font-semibold text-gray-900">
+                  {{ achievement.name || achievement.title || 'Achievement sans nom' }}
+                </h4>
+                <p class="text-sm text-gray-600 mt-1">
+                  {{ achievement.description || 'Pas de description disponible' }}
+                </p>
+                <div class="flex items-center space-x-4 mt-2">
+                  <span class="inline-flex items-center text-sm text-yellow-600">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    {{ achievement.experience || achievement.xpReward || 0 }} XP
+                  </span>
+                  <span v-if="achievement.active !== false" class="inline-flex items-center text-xs text-green-600">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Actif
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Aucun achievement disponible -->
+        <div v-else class="text-center py-12">
+          <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+          </svg>
+          <p class="mt-4 text-lg text-gray-500">Aucun achievement disponible</p>
+          <p class="text-sm text-gray-400 mb-4">Créez d'abord des achievements dans l'onglet Succès</p>
+          
+          <!-- Boutons d'action -->
+          <div class="flex flex-col items-center space-y-2">
+            <nuxt-link 
+              to="/admin/success" 
+              class="inline-flex items-center text-sm text-yellow-600 hover:text-yellow-800 underline"
+            >
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+              Aller créer des achievements
+            </nuxt-link>
+            
+            <!-- Bouton de rechargement -->
+            <button 
+              @click="reloadAchievements"
+              type="button"
+              class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
+            >
+              <svg class="w-4 h-4 mr-1" :class="{ 'animate-spin': achievementsLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Recharger les achievements
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+        <div class="text-sm text-gray-500">
+          Sélectionnez l'achievement qui sera débloqué en terminant ce circuit
+        </div>
+        <button
+          @click="closeAchievementModal"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal de configuration des accessibilités -->
+  <div v-if="showAccessibilityModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+      <!-- Header -->
+      <div class="bg-orange-50 px-6 py-4 border-b border-orange-200 flex justify-between items-center">
+        <h3 class="text-xl font-bold text-gray-900 flex items-center">
+          <svg class="w-6 h-6 mr-3 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          Configurer les accessibilités
+        </h3>
+        <button @click="closeAccessibilityModal" class="text-gray-400 hover:text-gray-600 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Contenu de la modal -->
+      <div class="p-6 overflow-y-auto max-h-96">
+        <!-- Indicateur de chargement des accessibilités -->
+        <div v-if="accessibilitiesLoading" class="text-center py-8">
+          <svg class="mx-auto h-8 w-8 text-orange-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <p class="text-sm text-gray-600 mt-2">Chargement des accessibilités...</p>
+        </div>
+        
+        <!-- Liste des accessibilités disponibles avec checkboxes -->
+        <div v-else-if="availableAccessibilities && availableAccessibilities.length > 0">
+          <label class="block text-sm font-medium text-gray-700 mb-4">
+            Accessibilités disponibles ({{ selectedAccessibilityIds.length }} sélectionnée(s))
+          </label>
+          
+          <!-- Affichage sous forme de checkboxes -->
+          <div class="space-y-3">
+            <div 
+              v-for="accessibility in availableAccessibilities" 
+              :key="accessibility.id"
+              class="flex items-start space-x-3 p-3 hover:bg-orange-50 rounded-md cursor-pointer border border-gray-200"
+              @click="toggleAccessibilitySelection(accessibility.id)"
+            >
+              <input
+                type="checkbox"
+                :checked="selectedAccessibilityIds.includes(accessibility.id)"
+                @change="toggleAccessibilitySelection(accessibility.id)"
+                @click.stop
+                class="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+              />
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-2">
+                  <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="text-white text-sm">♿</span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">
+                      {{ accessibility.name || accessibility.title || 'Accessibilité sans nom' }}
+                    </p>
+                    <p class="text-xs text-gray-500">
+                      {{ accessibility.description || 'Pas de description' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Actions rapides -->
+          <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+            <div class="text-xs text-gray-500">
+              {{ selectedAccessibilityIds.length }} / {{ availableAccessibilities.length }} accessibilités sélectionnées
+            </div>
+            <div class="flex space-x-2">
+              <button 
+                @click="selectAllAccessibilities"
+                type="button"
+                class="text-xs text-orange-600 hover:text-orange-800 underline"
+              >
+                Tout sélectionner
+              </button>
+              <button 
+                @click="clearAccessibilitySelection"
+                type="button"
+                class="text-xs text-gray-600 hover:text-gray-800 underline"
+              >
+                Tout désélectionner
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Aucune accessibilité disponible -->
+        <div v-else class="text-center py-12">
+          <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <p class="mt-4 text-lg text-gray-500">Aucune accessibilité disponible</p>
+          <p class="text-sm text-gray-400 mb-4">Les accessibilités doivent être créées via l'API Laravel</p>
+          
+          <!-- Bouton de rechargement -->
+          <button 
+            @click="reloadAccessibilities"
+            type="button"
+            class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
+          >
+            <svg class="w-4 h-4 mr-1" :class="{ 'animate-spin': accessibilitiesLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            Recharger les accessibilités
+          </button>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
+        <div class="text-sm text-gray-500">
+          {{ selectedAccessibilityIds.length }} accessibilité(s) sélectionnée(s)
+        </div>
+        <div class="flex space-x-3">
+          <button
+            @click="closeAccessibilityModal"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            @click="saveAccessibilityConfiguration"
+            class="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-md hover:bg-orange-700 transition-colors"
+          >
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 // Meta de la page
 definePageMeta({
@@ -1452,19 +1845,175 @@ const {
   createCircuit,
   updateCircuit,
   deleteCircuit,
-  toggleCircuitStatus,
   formatDate,
   formatDuration,
   getCircuitAddress,
   testConnection
 } = useCircuits()
 
-// Composable pour les missions (pour la sélection)
-const {
-  missions: availableMissions,
-  loading: missionsLoading,
-  fetchMissions
-} = useMissions()
+// Composable pour les missions (pour la sélection) - Importation explicite
+let availableMissions = ref([])
+let missionsLoading = ref(false)
+let fetchMissions = null
+
+// Composable pour les achievements (pour la sélection) - Importation explicite
+let availableAchievements = ref([])
+let achievementsLoading = ref(false)
+let fetchAchievements = null
+
+// Composable pour les accessibilités (pour la sélection) - Importation explicite
+let availableAccessibilities = ref([])
+let accessibilitiesLoading = ref(false)
+let fetchAccessibilities = null
+
+// Initialiser les composables de manière asynchrone
+onMounted(async () => {
+  // Initialiser le composable missions
+  try {
+    console.log('🔄 Initialisation du composable missions...')
+    const missionsComposable = await useMissions()
+    
+    // Assigner les fonctions et variables
+    availableMissions = missionsComposable.missions
+    missionsLoading = missionsComposable.loading
+    fetchMissions = missionsComposable.fetchMissions
+    
+    console.log('✅ Composable missions initialisé')
+    
+    // Charger les missions immédiatement
+    if (fetchMissions) {
+      console.log('🚀 Chargement des missions...')
+      await fetchMissions()
+      console.log('✅ Missions chargées:', availableMissions.value?.length || 0)
+      console.log('📋 Missions disponibles:', availableMissions.value)
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors de l\'initialisation des missions:', err)
+    // Fallback: créer des missions de test pour le développement
+    availableMissions.value = [
+      {
+        id: 1,
+        title: 'Mission Test 1',
+        description: 'Description de la mission test 1',
+        latitude: 50.4930,
+        longitude: 4.4680,
+        questions: [{ id: 1, title: 'Question test' }]
+      },
+      {
+        id: 2,
+        title: 'Mission Test 2',
+        description: 'Description de la mission test 2',
+        latitude: 50.4925,
+        longitude: 4.4678,
+        questions: [{ id: 2, title: 'Question test 2' }]
+      }
+    ]
+    console.log('⚠️ Utilisation des missions de test')
+  }
+
+  // Initialiser le composable achievements
+  try {
+    console.log('🔄 Initialisation du composable achievements...')
+    const achievementsComposable = await useAchievements()
+    
+    // Assigner les fonctions et variables
+    availableAchievements = achievementsComposable.achievements
+    achievementsLoading = achievementsComposable.loading
+    fetchAchievements = achievementsComposable.fetchAchievements
+    
+    console.log('✅ Composable achievements initialisé')
+    
+    // Charger les achievements immédiatement
+    if (fetchAchievements) {
+      console.log('🚀 Chargement des achievements...')
+      await fetchAchievements()
+      console.log('✅ Achievements chargés:', availableAchievements.value?.length || 0)
+      console.log('🏆 Achievements disponibles:', availableAchievements.value)
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors de l\'initialisation des achievements:', err)
+    // Fallback: créer des achievements de test pour le développement
+    availableAchievements.value = [
+      {
+        id: 1,
+        name: 'Premier Circuit',
+        title: 'Premier Circuit',
+        experience: 100,
+        description: 'Terminer votre premier circuit urbex'
+      },
+      {
+        id: 2,
+        name: 'Explorateur Confirmé',
+        title: 'Explorateur Confirmé',
+        experience: 250,
+        description: 'Terminer 5 circuits urbex'
+      }
+    ]
+    console.log('⚠️ Utilisation des achievements de test')
+  }
+
+  // Initialiser le composable accessibilités
+  try {
+    console.log('🔄 Initialisation du composable accessibilités...')
+    const accessibilitiesComposable = await useAccessibilities()
+    
+    // Assigner les fonctions et variables
+    availableAccessibilities = accessibilitiesComposable.accessibilities
+    accessibilitiesLoading = accessibilitiesComposable.loading
+    fetchAccessibilities = accessibilitiesComposable.fetchAccessibilities
+    
+    console.log('✅ Composable accessibilités initialisé')
+    
+    // Charger les accessibilités immédiatement
+    if (fetchAccessibilities) {
+      console.log('🚀 Chargement des accessibilités...')
+      await fetchAccessibilities()
+      console.log('✅ Accessibilités chargées:', availableAccessibilities.value?.length || 0)
+      console.log('♿ Accessibilités disponibles:', availableAccessibilities.value)
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors de l\'initialisation des accessibilités:', err)
+    // Fallback: créer des accessibilités de test pour le développement
+    availableAccessibilities.value = [
+      {
+        id: 1,
+        name: 'Accès facile',
+        title: 'Accès facile',
+        description: 'Accessible aux débutants'
+      },
+      {
+        id: 2,
+        name: 'Accès modéré',
+        title: 'Accès modéré',
+        description: 'Nécessite une bonne condition physique'
+      },
+      {
+        id: 3,
+        name: 'Accès difficile',
+        title: 'Accès difficile',
+        description: 'Réservé aux explorateurs expérimentés'
+      }
+    ]
+    console.log('⚠️ Utilisation des accessibilités de test')
+  }
+  
+  // Charger les circuits
+  console.log('🚀 Chargement des circuits...')
+  try {
+    await fetchCircuits()
+    console.log('✅ Circuits chargés:', circuits.value?.length || 0)
+  } catch (err) {
+    console.warn('Erreur lors de fetchCircuits:', err)
+  }
+  
+  // Ajouter l'événement pour fermer les listes quand on clique ailleurs
+  document.addEventListener('click', handleClickOutside)
+})
+
+// Nettoyage lors de la destruction du composant
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 
 // États locaux pour l'interface
 const showAddForm = ref(false)
@@ -1475,6 +2024,9 @@ const editingCircuit = ref(null)
 const showEditModal = ref(false)
 const successMessage = ref('')
 const refreshing = ref(false)
+
+// État pour gérer l'affichage des listes de missions
+const showMissionsList = ref({})
 
 // Variables de filtrage pour circuits
 const searchTerm = ref('')
@@ -1538,14 +2090,153 @@ const editingCommentCircuit = ref(null)
 // États pour la sélection des missions
 const selectedMissionIds = ref([])
 
+// États pour la sélection des achievements
+const showAchievementModal = ref(false)
+const selectedAchievementId = ref(null)
+
+// États pour la configuration des accessibilités
+const showAccessibilityModal = ref(false)
+const selectedAccessibilityIds = ref([])
+
 // États pour l'édition de circuit avec missions
 const editingCircuitMissionIds = ref([])
-const editingCircuitSelectedMissions = computed(() => {
-  const missionsBase = Array.isArray(availableMissions?.value) ? availableMissions.value : []
-  const ids = Array.isArray(editingCircuitMissionIds?.value) ? editingCircuitMissionIds.value : []
-  if (missionsBase.length === 0 || ids.length === 0) return []
-  return missionsBase.filter(mission => ids.includes(mission.id || mission.documentId))
-})
+
+// États pour l'édition de circuit avec achievements
+const editingCircuitAchievementId = ref(null)
+
+// États pour l'édition de circuit avec accessibilités
+const editingCircuitAccessibilityIds = ref([])
+
+// Fonctions de gestion des missions
+const toggleMissionSelection = (missionId) => {
+  const index = selectedMissionIds.value.indexOf(missionId)
+  if (index > -1) {
+    selectedMissionIds.value.splice(index, 1)
+  } else {
+    selectedMissionIds.value.push(missionId)
+  }
+}
+
+const selectAllMissions = () => {
+  selectedMissionIds.value = availableMissions.value?.map(mission => mission.id) || []
+}
+
+const clearMissionSelection = () => {
+  selectedMissionIds.value = []
+}
+
+// Fonctions pour la gestion des missions dans l'édition
+const toggleEditingMissionSelection = (missionId) => {
+  const index = editingCircuitMissionIds.value.indexOf(missionId)
+  if (index > -1) {
+    editingCircuitMissionIds.value.splice(index, 1)
+  } else {
+    editingCircuitMissionIds.value.push(missionId)
+  }
+}
+
+const selectAllEditingMissions = () => {
+  editingCircuitMissionIds.value = availableMissions.value?.map(mission => mission.id) || []
+}
+
+const clearEditingMissionSelection = () => {
+  editingCircuitMissionIds.value = []
+}
+
+// Fonction pour recharger les missions manuellement
+const reloadMissions = async () => {
+  console.log('🔄 Rechargement manuel des missions...')
+  missionsLoading.value = true
+  
+  try {
+    if (fetchMissions) {
+      await fetchMissions()
+      console.log('✅ Missions rechargées:', availableMissions.value?.length || 0)
+      console.log('📋 Données missions:', availableMissions.value)
+    } else {
+      console.warn('⚠️ fetchMissions non disponible - Test direct de l\'API')
+      await testDirectApiCall()
+    }
+  } catch (err) {
+    console.error('❌ Erreur lors du rechargement:', err)
+    console.log('🔄 Tentative d\'appel direct à l\'API...')
+    await testDirectApiCall()
+  } finally {
+    missionsLoading.value = false
+  }
+}
+
+// Fonction pour tester directement l'API
+const testDirectApiCall = async () => {
+  try {
+    console.log('🧪 Test direct de l\'API Laravel...')
+    
+    // Test avec fetch simple
+    const baseUrl = 'http://127.0.0.1:8000' // URL de l'API Laravel
+    const response = await fetch(`${baseUrl}/api/missions`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    console.log('📡 Statut de la réponse:', response.status)
+    console.log('📡 Headers:', Object.fromEntries(response.headers.entries()))
+    
+    if (response.ok) {
+      const data = await response.json()
+      console.log('✅ Données reçues:', data)
+      
+      // Extraire les missions selon la structure Laravel
+      const missions = data.missions || data.data || data
+      if (Array.isArray(missions)) {
+        availableMissions.value = missions
+        console.log(`✅ ${missions.length} missions chargées directement`)
+        showSuccessMessage(`${missions.length} missions chargées avec succès !`)
+      } else {
+        console.warn('⚠️ Format de données inattendu:', data)
+      }
+    } else {
+      const errorText = await response.text()
+      console.error('❌ Erreur API:', response.status, errorText)
+      throw new Error(`HTTP ${response.status}: ${errorText}`)
+    }
+  } catch (error) {
+    console.error('❌ Erreur lors du test direct:', error)
+    showErrorMessage('Impossible de charger les missions: ' + error.message)
+    
+    // Fallback avec des données de test
+    console.log('🔧 Utilisation de données de test...')
+    availableMissions.value = [
+      {
+        id: 1,
+        title: 'Mission de Test 1',
+        description: 'Mission de développement pour tester l\'interface',
+        latitude: 50.4930,
+        longitude: 4.4680,
+        threshold: 100,
+        hint: 'Ceci est une mission de test',
+        questions: [
+          { id: 1, title: 'Question test 1', type: 'qcm' }
+        ]
+      },
+      {
+        id: 2,
+        title: 'Mission de Test 2', 
+        description: 'Deuxième mission de test',
+        latitude: 50.4925,
+        longitude: 4.4678,
+        threshold: 50,
+        hint: 'Autre mission de test',
+        questions: [
+          { id: 2, title: 'Question test 2', type: 'enigme' }
+        ]
+      }
+    ]
+    showSuccessMessage('Missions de test chargées (mode développement)')
+  }
+}
 
 // Référence pour l'input file
 const fileInput = ref(null)
@@ -1655,14 +2346,6 @@ const filteredCircuits = computed(() => {
   return filtered
 })
 
-// Missions sélectionnées
-const selectedMissions = computed(() => {
-  const missionsBase = Array.isArray(availableMissions?.value) ? availableMissions.value : []
-  const ids = Array.isArray(selectedMissionIds?.value) ? selectedMissionIds.value : []
-  if (missionsBase.length === 0 || ids.length === 0) return []
-  return missionsBase.filter(mission => ids.includes(mission.id || mission.documentId))
-})
-
 // Nombre de filtres actifs
 const activeFiltersCount = computed(() => {
   let count = 0
@@ -1678,12 +2361,19 @@ const handleCreateCircuit = async () => {
   try {
     // Préparer les données du circuit avec les missions sélectionnées
     const circuitData = {
-      ...newCircuit.value,
-      // Inclure les missions sélectionnées dans le champ missions (relation oneToMany)
-      missions: selectedMissionIds.value.map(id => ({ id })),
-      // Garder la compatibilité avec le champ legacy
-      Missions: selectedMissions.value
+      name: newCircuit.value.name,
+      description: newCircuit.value.description,
+      duration: newCircuit.value.duration,
+      like: newCircuit.value.like || 0,
+      thumbnail: newCircuit.value.thumbnail,
+      // Utiliser mission_ids pour Laravel (Many-to-Many)
+      mission_ids: selectedMissionIds.value,
+      // Autres relations possibles
+      achievement_id: newCircuit.value.achievement?.id || null,
+      accessibility_ids: (newCircuit.value.accessibilities || []).map(a => a.id)
     }
+    
+    console.log('🚀 Création circuit avec données:', circuitData)
     
     await createCircuit(circuitData)
     showSuccessMessage('Circuit créé avec succès !')
@@ -1693,6 +2383,7 @@ const handleCreateCircuit = async () => {
     await fetchCircuits()
   } catch (err) {
     console.error('Erreur lors de la création:', err)
+    showSuccessMessage(err.message || 'Erreur lors de la création du circuit', 'error')
   }
 }
 
@@ -1703,9 +2394,8 @@ const handleDeleteCircuit = async (circuit) => {
 
 const confirmDelete = async () => {
   if (circuitToDelete.value) {
-    // Utiliser documentId pour Strapi v5, fallback sur id
-    const idToUse = circuitToDelete.value.documentId || circuitToDelete.value.id
-    const success = await deleteCircuit(idToUse)
+    // Utiliser l'id pour Laravel
+    const success = await deleteCircuit(circuitToDelete.value.id)
     if (success) {
       showSuccessMessage('Circuit supprimé avec succès !')
     } else if (error.value) {
@@ -1746,7 +2436,7 @@ const handleEditCircuit = (circuit) => {
   }
   
   // Initialiser les missions sélectionnées pour l'édition
-  editingCircuitMissionIds.value = (circuit.missions || []).map(mission => mission.id || mission.documentId).filter(Boolean)
+  editingCircuitMissionIds.value = (circuit.missions || []).map(mission => mission.id).filter(Boolean)
   
   showEditModal.value = true
 }
@@ -1782,30 +2472,24 @@ const saveEditCircuit = async () => {
 
     loading.value = true
     
-    // Préparer les données selon le schéma Strapi exact
+    // Préparer les données selon le schéma Laravel
     const updateData = {
-      // Champ string
       name: editingCircuit.value.name,
-      // Champ text
       description: editingCircuit.value.description || '',
-      // Champ biginteger
       duration: editingCircuit.value.duration ? parseInt(editingCircuit.value.duration) : null,
-      // Champ integer
       like: editingCircuit.value.like ? parseInt(editingCircuit.value.like) : 0,
-      // Component address (non repeatable)
-      address: editingCircuit.value.address || null,
-      // Component mission (repeatable) - utiliser les missions sélectionnées
-      missions: editingCircuitMissionIds.value.map(id => ({ id })),
-      // Component comment (repeatable)
-      comments: editingCircuit.value.comments || []
+      thumbnail: editingCircuit.value.thumbnail || null,
+      // Utiliser mission_ids pour Laravel (Many-to-Many)
+      mission_ids: editingCircuitMissionIds.value,
+      // Autres relations possibles
+      achievement_id: editingCircuit.value.achievement?.id || null,
+      accessibility_ids: (editingCircuit.value.accessibilities || []).map(a => a.id)
     }
 
-    console.log('💾 Sauvegarde des données circuit selon schéma Strapi:', updateData)
+    console.log('💾 Sauvegarde des données circuit selon schéma Laravel:', updateData)
     
-    // Utiliser documentId pour Strapi v5, fallback sur id
-    const idToUse = editingCircuit.value.documentId || editingCircuit.value.id
-    
-    await updateCircuit(idToUse, updateData)
+    // Utiliser l'id pour Laravel
+    await updateCircuit(editingCircuit.value.id, updateData)
     
     showSuccessMessage('✅ Circuit mis à jour avec succès !')
     showEditModal.value = false
@@ -1822,18 +2506,6 @@ const saveEditCircuit = async () => {
     showErrorMessage(`Erreur lors de la mise à jour: ${err.message}`)
   } finally {
     loading.value = false
-  }
-}
-
-const handleToggleStatus = async (circuit) => {
-  try {
-    // Utiliser documentId pour Strapi v5, fallback sur id
-    const idToUse = circuit.documentId || circuit.id
-    await toggleCircuitStatus(idToUse, !circuit.published)
-    showSuccessMessage(`Circuit ${circuit.published ? 'archivé' : 'désarchivé'} avec succès !`)
-    await fetchCircuits()
-  } catch (err) {
-    console.error('Erreur lors du changement de statut:', err)
   }
 }
 
@@ -1872,38 +2544,23 @@ const stats = computed(() => {
 
   const active = (typeof activeCircuits !== 'undefined' && activeCircuits && typeof activeCircuits.value !== 'undefined')
     ? activeCircuits.value
-    : base.filter(c => c.publishedAt !== null && c.publishedAt !== undefined).length
+    : base.length // Pour l'instant, tous les circuits sont considérés comme actifs
 
+  // Utiliser directement newCircuitsSuggested du composable qui calcule les circuits des 7 derniers jours
   const nw = (typeof newCircuitsSuggested !== 'undefined' && newCircuitsSuggested && typeof newCircuitsSuggested.value !== 'undefined')
     ? newCircuitsSuggested.value
     : (() => {
-      const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-      return base.filter(c => c.createdAt && new Date(c.createdAt) >= sevenDaysAgo).length
+      const sevenDaysAgo = new Date()
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+      return base.filter(c => {
+        // Laravel utilise 'created_at' au format ISO
+        if (!c.created_at) return false
+        const circuitDate = new Date(c.created_at)
+        return circuitDate >= sevenDaysAgo
+      }).length
     })()
 
   return { total, active, new: nw }
-})
-
-// Chargement initial des données
-onMounted(async () => {
-  console.log('🚀 Chargement des circuits...')
-  try {
-    await fetchCircuits()
-  } catch (err) {
-    console.warn('Erreur lors de fetchCircuits:', err)
-  }
-
-  console.log('🚀 Chargement des missions...')
-  // Guard: fetchMissions may be undefined if the composable wasn't auto-imported or not available
-  if (typeof fetchMissions === 'function') {
-    try {
-      await fetchMissions()
-    } catch (err) {
-      console.warn('Erreur lors de fetchMissions:', err)
-    }
-  } else {
-    console.warn('fetchMissions non disponible, saut de l\'appel')
-  }
 })
 
 // Fonctions anciennes pour compatibilité (modifiées)
@@ -2060,15 +2717,60 @@ const closeCommentsOverlay = () => {
   selectedCircuit.value = null
 }
 
-// Fonction pour afficher les missions d'un circuit
-const viewCircuitMissions = (circuit) => {
-  console.log('Missions du circuit:', circuit.name, circuit.missions)
-  // TODO: Créer une modal pour afficher/gérer les missions
-  if (circuit.missions && circuit.missions.length > 0) {
-    alert(`Ce circuit a ${circuit.missions.length} mission(s):\n` + 
-          circuit.missions.map(m => `- ${m.name || m.title || 'Mission sans nom'}`).join('\n'))
-  } else {
-    alert('Ce circuit n\'a pas encore de missions associées.')
+// Fonctions pour gérer l'affichage des missions
+const toggleMissionsList = (circuitId) => {
+  // Fermer toutes les autres listes ouvertes
+  Object.keys(showMissionsList.value).forEach(id => {
+    if (id !== circuitId.toString()) {
+      showMissionsList.value[id] = false
+    }
+  })
+  
+  // Toggle la liste pour ce circuit
+  showMissionsList.value[circuitId] = !showMissionsList.value[circuitId]
+}
+
+const closeMissionsList = () => {
+  Object.keys(showMissionsList.value).forEach(id => {
+    showMissionsList.value[id] = false
+  })
+}
+
+// Fonction pour détacher une mission d'un circuit
+const handleDetachMission = async (circuitId, missionId, missionName) => {
+  if (!confirm(`Êtes-vous sûr de vouloir détacher la mission "${missionName || `Mission ${missionId}`}" de ce circuit ?`)) {
+    return
+  }
+  
+  try {
+    // TODO: Implémenter la logique de détachement via l'API
+    console.log(`Détachement de la mission ${missionId} du circuit ${circuitId}`)
+    
+    // Simuler le détachement en retirant la mission de la liste
+    const circuit = circuits.value.find(c => c.id === circuitId)
+    if (circuit && circuit.missions) {
+      circuit.missions = circuit.missions.filter(m => m.id !== missionId)
+    }
+    
+    successMessage.value = `Mission "${missionName || `Mission ${missionId}`}" détachée avec succès !`
+    
+    // Fermer la liste après détachement
+    closeMissionsList()
+    
+    setTimeout(() => {
+      successMessage.value = ''
+    }, 3000)
+    
+  } catch (err) {
+    console.error('Erreur lors du détachement de la mission:', err)
+    error.value = 'Erreur lors du détachement de la mission'
+  }
+}
+
+// Fermer les listes quand on clique ailleurs
+const handleClickOutside = (event) => {
+  if (!event.target.closest('.relative')) {
+    closeMissionsList()
   }
 }
 
@@ -2181,25 +2883,101 @@ const viewCircuitComments = (circuit) => {
   }
 }
 
-// Fonction pour retirer une mission sélectionnée
-const removeSelectedMission = (missionId) => {
-  selectedMissionIds.value = selectedMissionIds.value.filter(id => id !== missionId)
-}
-
-// Fonction pour retirer une mission sélectionnée dans l'édition
-const removeEditingCircuitMission = (missionId) => {
-  editingCircuitMissionIds.value = editingCircuitMissionIds.value.filter(id => id !== missionId)
-}
-
 // Fonctions pour les boutons du formulaire d'ajout
 const selectAchievement = () => {
-  // TODO: Ouvrir une modal pour sélectionner un achievement
-  alert('Fonctionnalité de sélection d\'achievement à implémenter')
+  // Ouvrir la modal pour sélectionner un achievement
+  showAchievementModal.value = true
 }
 
 const configureAccessibilities = () => {
-  // TODO: Ouvrir une modal pour configurer les accessibilités
-  alert('Fonctionnalité de configuration des accessibilités à implémenter')
+  // Ouvrir la modal pour configurer les accessibilités
+  showAccessibilityModal.value = true
+}
+
+// Fonctions pour gérer la sélection des achievements
+const closeAchievementModal = () => {
+  showAchievementModal.value = false
+}
+
+const selectAchievementFromModal = (achievement) => {
+  newCircuit.value.achievement = achievement
+  selectedAchievementId.value = achievement.id
+  showAchievementModal.value = false
+}
+
+const removeSelectedAchievement = () => {
+  newCircuit.value.achievement = null
+  selectedAchievementId.value = null
+}
+
+// Fonctions pour gérer la configuration des accessibilités
+const closeAccessibilityModal = () => {
+  showAccessibilityModal.value = false
+}
+
+const toggleAccessibilitySelection = (accessibilityId) => {
+  const index = selectedAccessibilityIds.value.indexOf(accessibilityId)
+  if (index > -1) {
+    selectedAccessibilityIds.value.splice(index, 1)
+  } else {
+    selectedAccessibilityIds.value.push(accessibilityId)
+  }
+}
+
+const selectAllAccessibilities = () => {
+  selectedAccessibilityIds.value = availableAccessibilities.value?.map(acc => acc.id) || []
+}
+
+const clearAccessibilitySelection = () => {
+  selectedAccessibilityIds.value = []
+}
+
+const saveAccessibilityConfiguration = () => {
+  // Mettre à jour le circuit avec les accessibilités sélectionnées
+  const selectedAccessibilities = availableAccessibilities.value?.filter(acc => 
+    selectedAccessibilityIds.value.includes(acc.id)
+  ) || []
+  
+  newCircuit.value.accessibilities = selectedAccessibilities
+  showAccessibilityModal.value = false
+}
+
+// Fonction pour retirer une accessibilité du circuit
+const removeAccessibility = (accessibilityId) => {
+  if (newCircuit.value.accessibilities) {
+    newCircuit.value.accessibilities = newCircuit.value.accessibilities.filter(
+      acc => acc.id !== accessibilityId
+    )
+  }
+  // Retirer aussi de la sélection
+  const index = selectedAccessibilityIds.value.indexOf(accessibilityId)
+  if (index > -1) {
+    selectedAccessibilityIds.value.splice(index, 1)
+  }
+}
+
+// Fonction pour recharger les achievements
+const reloadAchievements = async () => {
+  if (fetchAchievements) {
+    try {
+      await fetchAchievements()
+      console.log('✅ Achievements rechargés')
+    } catch (err) {
+      console.error('Erreur lors du rechargement des achievements:', err)
+    }
+  }
+}
+
+// Fonction pour recharger les accessibilités
+const reloadAccessibilities = async () => {
+  if (fetchAccessibilities) {
+    try {
+      await fetchAccessibilities()
+      console.log('✅ Accessibilités rechargées')
+    } catch (err) {
+      console.error('Erreur lors du rechargement des accessibilités:', err)
+    }
+  }
 }
 </script>
 

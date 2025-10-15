@@ -41,35 +41,17 @@
         
         <!-- Stats Section dynamiques -->
         <div class="mb-12 flex-shrink-0">
-          <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-12">
+          <div class="grid grid-cols-2 lg:grid-cols-2 gap-4 lg:gap-12">
             <!-- Total succès -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
               <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ totalSuccesses }}</div>
               <div class="text-base lg:text-lg text-gray-600">Total Succès</div>
             </div>
 
-            <!-- Succès actifs (publiés) -->
-            <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ activeSuccesses }}</div>
-              <div class="text-base lg:text-lg text-gray-600">Publiés</div>
-            </div>
-
             <!-- Succès en brouillon -->
             <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
               <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ totalSuccesses - activeSuccesses }}</div>
               <div class="text-base lg:text-lg text-gray-600">Brouillons</div>
-            </div>
-
-            <!-- XP Total disponible -->
-            <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ formatNumber(totalXP) }}</div>
-              <div class="text-base lg:text-lg text-gray-600">XP Disponibles</div>
-            </div>
-
-            <!-- XP Total distribué -->
-            <div class="bg-gray-100 rounded-lg p-4 lg:p-6">
-              <div class="text-4xl lg:text-5xl font-bold text-gray-900 mb-2" style="font-family: 'Freeman', sans-serif;">{{ formatNumber(totalXPDistributed) }}</div>
-              <div class="text-base lg:text-lg text-gray-600">XP Total distribué</div>
             </div>
           </div>
         </div>
@@ -219,20 +201,6 @@
                     />
                   </div>
 
-                  <!-- Statut -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
-                    <select
-                      :value="filters.status"
-                      @change="updateFilter('status', $event.target.value)"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
-                    >
-                      <option value="">Tous les statuts</option>
-                      <option value="published">Publiés</option>
-                      <option value="draft">Brouillons</option>
-                    </select>
-                  </div>
-
                   <!-- Expérience -->
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Expérience</label>
@@ -242,9 +210,9 @@
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
                     >
                       <option value="">Toute expérience</option>
-                      <option value="low">Faible (< 100 XP)</option>
+                      <option value="low">Faible (&lt; 100 XP)</option>
                       <option value="medium">Moyenne (100-500 XP)</option>
-                      <option value="high">Élevée (> 500 XP)</option>
+                      <option value="high">Élevée (&gt; 500 XP)</option>
                     </select>
                   </div>
                 </template>
@@ -263,12 +231,9 @@
           <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <!-- Table Header - Amélioré avec plus d'informations -->
             <div class="bg-gray-50 px-6 py-6 border-b border-gray-200">
-              <div class="grid grid-cols-12 gap-4 text-sm font-medium text-gray-700">
+              <div class="grid grid-cols-7 gap-4 text-sm font-medium text-gray-700">
                 <div class="col-span-4">Nom</div>
                 <div class="col-span-2">Expérience</div>
-                <div class="col-span-2">Statut</div>
-                <div class="col-span-1">Débloquages</div>
-                <div class="col-span-2">Modifié</div>
                 <div class="col-span-1">Actions</div>
               </div>
             </div>
@@ -294,7 +259,7 @@
                 :key="success.id || index"
                 class="px-6 py-6 border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200"
               >
-                <div class="grid grid-cols-12 gap-4 items-center text-sm">
+                <div class="grid grid-cols-7 gap-4 items-center text-sm">
                   <!-- Nom du succès -->
                   <div class="col-span-4 flex items-center space-x-3 min-w-0">
                     <div class="text-2xl flex-shrink-0">🏆</div>
@@ -310,31 +275,6 @@
                     </span>
                   </div>
                   
-                  <!-- Statut (interactif) -->
-                  <div class="col-span-2 text-gray-600">
-                    <button
-                      @click="toggleSuccessStatus(success)"
-                      :class="success.active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'"
-                      class="px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 flex items-center space-x-1 w-full justify-center"
-                      :title="success.active ? 'Cliquer pour mettre en brouillon' : 'Cliquer pour publier'"
-                    >
-                      <span>{{ success.active ? '✓ Publié' : '⏳ Brouillon' }}</span>
-                    </button>
-                  </div>
-                  
-                                    <!-- Débloquages (simulation) -->
-                  <div class="col-span-1 text-gray-600 text-center">
-                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap">
-                      {{ success.unlocks || 0 }}
-                    </span>
-                  </div>
-                  
-                  <!-- Date de modification -->
-                  <div class="col-span-2 text-gray-500 text-sm min-w-0">
-                    <div class="truncate font-medium">{{ formatDate(success.updatedAt) }}</div>
-                    <div class="text-xs text-gray-400 truncate">{{ formatTimeAgo(success.updatedAt) }}</div>
-                  </div>
-                  
                   <!-- Actions -->
                   <div class="col-span-1 flex space-x-1 justify-center">
                     <button
@@ -342,7 +282,7 @@
                       class="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors duration-200"
                       title="Modifier"
                     >
-                      <UiIcon name="edit" size="sm" />
+                      <UiIcon name="edit" size="md" />
                     </button>
                     <button
                       @click="toggleSuccessStatus(success)"
@@ -350,15 +290,15 @@
                       class="p-2 rounded-lg transition-colors duration-200"
                       :title="success.active ? 'Mettre en brouillon' : 'Publier'"
                     >
-                      <UiIcon v-if="success.active" name="close" size="sm" />
-                      <UiIcon v-else name="check-circle" size="sm" />
+                      <UiIcon v-if="success.active" name="close" size="lg" />
+                      <UiIcon v-else name="check-circle" size="lg" />
                     </button>
                     <button
                       @click="deleteSuccess(success)"
                       class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors duration-200"
                       title="Supprimer"
                     >
-                      <UiIcon name="trash" size="sm" />
+                      <UiIcon name="trash" size="lg" />
                     </button>
                   </div>
                 </div>
