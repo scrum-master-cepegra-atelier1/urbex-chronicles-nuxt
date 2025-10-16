@@ -1294,27 +1294,7 @@
               </div>
             </div>
             
-            <!-- Section Statut de publication (draftAndPublish) -->
-            <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                <span class="flex items-center">
-                  <svg class="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                  État de publication
-                </span>
-              </label>
-              <select 
-                v-model="editingCircuit.publishedAt"
-                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
-              >
-                <option :value="null">📝 Brouillon (non publié)</option>
-                <option :value="new Date().toISOString()">🌍 Publié (visible par tous)</option>
-              </select>
-              <p class="text-xs text-gray-500 mt-1">
-                Les brouillons ne sont visibles que par les administrateurs
-              </p>
-            </div>
+            
           </div>
           
           <!-- Colonne droite - Composants -->
@@ -2426,8 +2406,7 @@ const handleEditCircuit = (circuit) => {
     Missions: circuit.missions || [],
     // S'assurer que les commentaires existent (component comment repeatable)
     comments: circuit.comments || [],
-    // Gérer le statut de publication (draftAndPublish)
-    publishedAt: circuit.publishedAt || null,
+    
     // S'assurer que les champs obligatoires sont présents
     name: circuit.name || '',
     description: circuit.description || '',
