@@ -20,7 +20,7 @@
           <input 
             v-model="searchQuery"
             type="text" 
-            placeholder="Search"
+            placeholder="Recherchez"
             class="block w-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-2 rounded-lg leading-5 bg-rgba(217, 217, 217, 0.2) placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-gray-500 focus:border-blue-500 text-xs sm:text-sm"
           />
         </div>
